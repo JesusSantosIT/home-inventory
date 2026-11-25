@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}All External Items - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for crumb in breadcrumbs %}
+                <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+                    {% if crumb.url %}<a href="{{ crumb.url }}">{{ crumb.name }}</a>{% else %}{{ crumb.name }}{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-boxes"></i> All External Items</h1>
+                <p class="text-muted mb-0">Items available for lending across {{ households_count }} connected household{{ households_count|pluralize }}.</p>
+            </div>
+            <a href="{% url 'users:external_households' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Households
+            </a>
+        </div>
+    </div>
+</div>
+
+{% for err in errors %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Could not reach <strong>{{ err.household.name }}</strong>: {{ err.error }}
+</div>
+{% endfor %}
+
+<div class="row mb-3">
+    <div class="col-md-5">
+        <form method="get" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search name, description, location, brand..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+            {% if search %}<a href="{% url 'users:external_households_all_items' %}" class="btn btn-outline-secondary ms-2">Clear</a>{% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-list"></i> {{ items|length }} item{{ items|length|pluralize }} found</h5>
+
+                {% if items %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Household</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Available</th>
+                                <th>Location</th>
+                                <th>Brand / Model</th>
+                                <th>Condition</th>
+                                <th>Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ item.household_name }}</span></td>
+                                <td><strong>{{ item.name }}</strong></td>
+                                <td><small class="text-muted">{{ item.description|truncatewords:10 }}</small></td>
+                                <td><span class="badge bg-success">{{ item.available }} / {{ item.quantity }}</span></td>
+                                <td>{{ item.location|default:"—" }}</td>
+                                <td><small>{{ item.brand|default:"" }}{% if item.brand and item.model %} / {% endif %}{{ item.model|default:"" }}</small></td>
+                                <td>{{ item.condition|default:"—"|capfirst }}</td>
+                                <td>{% if item.current_value %}${{ item.current_value }}{% else %}—{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'users:external_household_request_item' item.household_pk %}?item_id={{ item.id }}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-box-arrow-in-right"></i> Request
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    {% if search %}
+                        <p class="text-muted mt-3">No items match "{{ search }}".</p>
+                    {% else %}
+                        {% include 'components/empty_state.html' with icon='bi-boxes' title='No Items Available' description='None of your connected households have items available for lending right now.' %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

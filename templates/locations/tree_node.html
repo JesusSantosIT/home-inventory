@@ -1,0 +1,59 @@
+{% comment %}
+Single tree node - intentionally NON-recursive.
+Children are lazy-loaded via AJAX into #children-{{ location.pk }}
+when the user expands the node (see loadChildren() in location_list.html).
+Requires the node to be annotated by _build_location_tree() in views.py:
+  tree_has_children, tree_item_total, tree_desc_count
+{% endcomment %}
+<div class="tree-item {% if level == 0 %}mt-2{% endif %} draggable drop-target"
+     id="tree-item-{{ location.pk }}"
+     draggable="true"
+     data-location-id="{{ location.pk }}"
+     data-location-name="{{ location.name }}"
+     data-path="{{ location.path }}"
+     data-can-be-parent="true">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="tree-toggle" id="toggle-{{ location.pk }}" style="cursor: pointer;" {% if location.tree_has_children %}onclick="event.stopPropagation(); toggleNode({{ location.pk }}); loadChildren({{ location.pk }})"{% endif %}>
+                {% if location.tree_has_children %}
+                    <i class="bi bi-caret-right"></i>
+                {% else %}
+                    <span style="width: 20px; display: inline-block;"></span>
+                {% endif %}
+            </span>
+            <i class="bi bi-{% if location.location_type == 'house' %}house{% elif location.location_type == 'room' %}door-open{% elif location.location_type == 'room_location' %}pin-map{% elif location.location_type == 'box' %}box{% else %}geo-alt{% endif %}"></i>
+            <strong>{{ location.name }}</strong>
+            <span class="badge bg-info badge-location ms-2">{{ location.get_location_type_display }}</span>
+            {% if location.has_barcode %}
+                <span class="badge bg-secondary badge-location">{{ location.barcode }}</span>
+            {% endif %}
+        </div>
+        <div class="btn-group btn-group-sm">
+            <a href="{% url 'locations:location_detail' location.pk %}" class="btn btn-outline-primary" onclick="event.stopPropagation()">
+                <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'locations:location_create_child' location.pk %}" class="btn btn-outline-success" onclick="event.stopPropagation()">
+                <i class="bi bi-plus"></i>
+            </a>
+            <button class="btn btn-outline-warning" onclick="event.stopPropagation(); openMoveModal({{ location.pk }})">
+                <i class="bi bi-arrows-move"></i>
+            </button>
+            {% if location.has_barcode %}
+            <a href="{% url 'locations:generate_barcode' location.pk %}" class="btn btn-outline-info" onclick="event.stopPropagation()">
+                <i class="bi bi-upc-scan"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="location-stats">
+        {{ location.tree_item_total }} items · {{ location.tree_desc_count }} sub-locations
+    </div>
+</div>
+
+<div class="tree-node drop-zone"
+     id="node-{{ location.pk }}"
+     style="display: none;"
+     data-parent-id="{{ location.pk }}"
+     data-path="{{ location.path }}">
+    <div id="children-{{ location.pk }}"></div>
+</div>

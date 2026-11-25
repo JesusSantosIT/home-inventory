@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ household.name }} - Available Items{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for crumb in breadcrumbs %}
+                <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+                    {% if crumb.url %}<a href="{{ crumb.url }}">{{ crumb.name }}</a>{% else %}{{ crumb.name }}{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        <h1><i class="bi bi-box-seam"></i> {{ household.name }} — Available Items</h1>
+        <p class="text-muted">
+            <code>{{ household.base_url }}</code>
+            {% if not household.remote_api_key %}
+                <span class="badge bg-warning text-dark ms-2">No API key stored</span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    {% if not household.remote_api_key %}
+        Delete this household and re-add it with their instance API key.
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-list"></i> Items Available for Lending ({{ items|length }})</h5>
+
+                {% if items %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Available</th>
+                                <th>Location</th>
+                                <th>Brand / Model</th>
+                                <th>Condition</th>
+                                <th>Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td><strong>{{ item.name }}</strong></td>
+                                <td><small class="text-muted">{{ item.description|truncatewords:15 }}</small></td>
+                                <td><span class="badge bg-success">{{ item.available }} / {{ item.quantity }}</span></td>
+                                <td>{{ item.location|default:"—" }}</td>
+                                <td><small>{{ item.brand|default:"" }}{% if item.brand and item.model %} / {% endif %}{{ item.model|default:"" }}</small></td>
+                                <td>{{ item.condition|default:"—"|capfirst }}</td>
+                                <td>{% if item.current_value %}${{ item.current_value }}{% else %}—{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'users:external_household_request_item' household.pk %}?item_id={{ item.id }}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-box-arrow-in-right"></i> Request
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% elif not error %}
+                    {% include 'components/empty_state.html' with icon='bi-box-seam' title='No Items Available' description='This household has no items currently marked as available for lending.' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

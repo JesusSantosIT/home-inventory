@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Lending Details - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+        <h1><i class="bi bi-arrow-left-right"></i> Lending Details</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card {% if is_overdue %}border-danger{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-box"></i> {{ lending.item.name }}</h5>
+                {% if lending.item.location %}
+                <p class="card-text"><strong>Location:</strong> {{ lending.item.location.name }}</p>
+                {% endif %}
+                
+                <hr>
+                
+                <p><strong>Borrowed by:</strong> {{ lending.borrower_display }}</p>
+                <p><strong>Borrowed:</strong> {{ lending.borrowed_date|date:"F j, Y, g:i A" }}</p>
+                <p><strong>Due:</strong> {{ lending.due_date|date:"F j, Y, g:i A" }}</p>
+                
+                {% if lending.returned_date %}
+                <p><strong>Returned:</strong> {{ lending.returned_date|date:"F j, Y, g:i A" }}</p>
+                <p><strong>Status:</strong> <span class="badge bg-success">Returned</span></p>
+                {% elif is_overdue %}
+                <p><strong>Status:</strong> <span class="badge bg-danger">OVERDUE by {{ days_overdue }} days</span></p>
+                {% else %}
+                <p><strong>Status:</strong> <span class="badge bg-primary">Borrowed ({{ days_remaining }} days remaining)</span></p>
+                {% endif %}
+                
+                {% if lending.notes %}
+                <p><strong>Notes:</strong> {{ lending.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Actions</h5>
+                <div class="d-grid gap-2">
+                    {% if not lending.returned_date %}
+                    <a href="{% url 'lending:return' lending.pk %}" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Mark as Returned
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'items:item_detail' lending.item.pk %}" class="btn btn-primary">
+                        <i class="bi bi-eye"></i> View Item
+                    </a>
+                    <a href="{% url 'lending:dashboard' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

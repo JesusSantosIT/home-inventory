@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.name }} - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+        <h1><i class="bi bi-box"></i> {{ item.name }}</h1>
+    </div>
+</div>
+
+{% if active_lendings %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> This item is currently borrowed:
+            <div class="table-responsive mt-2">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Borrower</th>
+                            <th>Quantity</th>
+                            <th>Due Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lending in active_lendings %}
+                        <tr>
+                            <td><strong>{{ lending.borrower_display }}</strong></td>
+                            <td>{{ lending.quantity }} item{{ lending.quantity|pluralize }}</td>
+                            <td>{{ lending.due_date|date:"M j, Y" }}</td>
+                            <td>
+                                <a href="{% url 'lending:return' lending.pk %}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Return
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif available_quantity < item.quantity %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> {{ available_quantity }} of {{ item.quantity }} available
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-images"></i> Images</h5>
+                {% if images %}
+                    <div class="row">
+                        {% for image in images %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    {% if image.thumbnail %}
+                                        <img src="{{ image.thumbnail.url }}" alt="{{ image.caption }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy">
+                                    {% else %}
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy">
+                                    {% endif %}
+                                    {% if image.caption %}
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">{{ image.caption }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-images' title='No Images' description='No images have been uploaded for this item. Add photos to help identify and document your item.' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Actions</h5>
+                <div class="d-grid gap-2">
+                    {% if is_editor %}
+                    <a href="{% url 'items:item_update' item.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Item
+                    </a>
+                    <a href="{% url 'items:item_delete' item.pk %}" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Item
+                    </a>
+                    {% endif %}
+                    {% if available_quantity > 0 %}
+                    <a href="{% url 'lending:create' item.pk %}" class="btn btn-success">
+                        <i class="bi bi-arrow-left-right"></i> Lend Item
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'warranties:warranty_create' item.pk %}" class="btn btn-info">
+                        <i class="bi bi-shield-check"></i> Add Warranty
+                    </a>
+                    <a href="{% url 'documents:document_create_for_item' item.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-file-earmark"></i> Add Document
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle"></i> Basic Information</h5>
+                <table class="table">
+                    <tr>
+                        <th>Name</th>
+                        <td>{{ item.name }}</td>
+                    </tr>
+                    {% if item.description %}
+                    <tr>
+                        <th>Description</th>
+                        <td>{{ item.description }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Quantity</th>
+                        <td>{{ item.quantity }}</td>
+                    </tr>
+                    <tr>
+                        <th>Location</th>
+                        <td>
+                            {% if item.location %}
+                                <a href="{% url 'locations:location_detail' item.location.pk %}">{{ item.location.name }}</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if item.categories.all %}
+                    <tr>
+                        <th>Categories</th>
+                        <td>
+                            {% for category in item.categories.all %}
+                                <span class="badge bg-secondary">{{ category.name }}</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-upc-scan"></i> Identification</h5>
+                <table class="table">
+                    {% if item.serial_number %}
+                    <tr>
+                        <th>Serial Number</th>
+                        <td>{{ item.serial_number }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.brand %}
+                    <tr>
+                        <th>Brand</th>
+                        <td>{{ item.brand }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.model %}
+                    <tr>
+                        <th>Model</th>
+                        <td>{{ item.model }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.barcode %}
+                    <tr>
+                        <th>Barcode</th>
+                        <td>{{ item.barcode }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.qr_code %}
+                    <tr>
+                        <th>QR Code</th>
+                        <td>{{ item.qr_code }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-barcode"></i> Barcode</h5>
+                {% if barcode_svg %}
+                    <div class="text-center">{{ barcode_svg|safe }}</div>
+                    <a href="{% url 'items:generate_barcode' item.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Download Barcode
+                    </a>
+                {% else %}
+                    <p class="text-muted">Barcode not available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-qr-code"></i> QR Code</h5>
+                {% if qr_code_image %}
+                    <div class="text-center">
+                        <img src="data:image/png;base64,{{ qr_code_image }}" alt="QR Code" style="max-width: 200px;">
+                    </div>
+                    <a href="{% url 'items:generate_qr_code' item.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Download QR Code
+                    </a>
+                {% else %}
+                    <p class="text-muted">QR code not available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-currency-dollar"></i> Purchase Information</h5>
+                <table class="table">
+                    {% if item.purchase_date %}
+                    <tr>
+                        <th>Purchase Date</th>
+                        <td>{{ item.purchase_date|date:"F j, Y" }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.purchase_price %}
+                    <tr>
+                        <th>Purchase Price</th>
+                        <td>${{ item.purchase_price|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if item.current_value %}
+                    <tr>
+                        <th>Current Value</th>
+                        <td>${{ item.current_value|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Condition</th>
+                        <td>
+                            <span class="badge bg-{% if item.condition == 'new' %}success{% elif item.condition == 'excellent' %}primary{% elif item.condition == 'good' %}info{% elif item.condition == 'fair' %}warning{% else %}danger{% endif %}">
+                                {{ item.get_condition_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

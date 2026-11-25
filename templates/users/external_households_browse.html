@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}External Households - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-link-45deg"></i> External Households</h1>
+                <p class="text-muted mb-0">Connected households — click one to see what they have available for lending.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'users:external_households_all_items' %}" class="btn btn-primary">
+                    <i class="bi bi-boxes"></i> View All Items
+                </a>
+                <a href="{% url 'users:external_households_manage' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-gear"></i> Manage
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for household in households %}
+    <div class="col-md-4 col-lg-3 mb-4">
+        <a href="{% url 'users:external_household_items' household.pk %}" class="text-decoration-none">
+            <div class="card h-100 {% if not household.active %}border-secondary{% else %}border-primary{% endif %} household-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-house-heart fs-1 {% if household.active %}text-primary{% else %}text-muted{% endif %}"></i>
+                    <h5 class="card-title mt-2 household-name">{{ household.name }}</h5>
+                    <p class="card-text text-muted small text-truncate">{{ household.base_url }}</p>
+                    {% if not household.remote_api_key %}
+                        <span class="badge bg-warning text-dark">No API key</span>
+                    {% elif not household.active %}
+                        <span class="badge bg-secondary">Disabled</span>
+                    {% else %}
+                        <span class="badge bg-success">Connected</span>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent text-center">
+                    <small class="text-primary"><i class="bi bi-box-seam"></i> View available items →</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-link-45deg fs-1 text-muted"></i>
+                <h5 class="mt-3">No households connected</h5>
+                <p class="text-muted">Connect with other households to share items for lending.</p>
+                <a href="{% url 'users:external_households_manage' %}" class="btn btn-primary">
+                    <i class="bi bi-gear"></i> Manage Connections
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.household-card {
+    color: var(--text-primary);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.household-card .household-name {
+    color: var(--text-primary) !important;
+}
+.household-card:hover .household-name {
+    color: var(--text-primary) !important;
+}
+.household-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem var(--shadow-hover, rgba(0,0,0,0.4));
+}
+</style>
+{% endblock %}

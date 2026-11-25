@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Home Inventory{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Theme CSS Variables -->
+    <style>
+        :root {
+            /* Light Theme (Default) */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --card-border: rgba(0,0,0,0.1);
+            --navbar-bg: #343a40;
+            --navbar-text: #ffffff;
+            --footer-bg: #343a40;
+            --footer-text: #ffffff;
+            --shadow-color: rgba(0,0,0,0.1);
+            --shadow-hover: rgba(0,0,0,0.15);
+            --input-bg: #ffffff;
+            --input-border: #ced4da;
+            --input-text: #212529;
+            --table-bg: #ffffff;
+            --table-border: #dee2e6;
+            --table-hover: #f8f9fa;
+        }
+        
+        [data-theme="dark"] {
+            /* Dark Theme */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --text-muted: #6c757d;
+            --border-color: #495057;
+            --card-bg: #2d2d2d;
+            --card-border: rgba(255,255,255,0.1);
+            --navbar-bg: #1a1a1a;
+            --navbar-text: #f8f9fa;
+            --footer-bg: #1a1a1a;
+            --footer-text: #f8f9fa;
+            --shadow-color: rgba(0,0,0,0.3);
+            --shadow-hover: rgba(0,0,0,0.4);
+            --input-bg: #2d2d2d;
+            --input-border: #495057;
+            --input-text: #f8f9fa;
+            --table-bg: #2d2d2d;
+            --table-border: #495057;
+            --table-hover: #3d3d3d;
+        }
+    </style>
+    
+    <style>
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            transition: background-color 0.3s ease;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--navbar-text) !important;
+        }
+        
+        .card {
+            border: none;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .card-body {
+            color: var(--text-primary);
+        }
+        
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        .bg-light {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        .border {
+            border-color: var(--border-color) !important;
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border-color: var(--input-border);
+            color: var(--input-text);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg);
+            border-color: #0d6efd;
+            color: var(--input-text);
+        }
+        
+        .table {
+            background-color: var(--table-bg);
+            color: var(--text-primary);
+        }
+        
+        .table th {
+            background-color: var(--bg-tertiary);
+            border-color: var(--table-border);
+        }
+        
+        .table td {
+            border-color: var(--table-border);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: var(--table-hover);
+        }
+        
+        .list-group-item {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .list-group-item-action:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .alert {
+            transition: all 0.3s ease;
+        }
+        
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--navbar-text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            background-color: rgba(255,255,255,0.1);
+            transform: scale(1.1);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 1.5rem !important;
+            }
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            .btn-group-sm .btn {
+                padding: 0.25rem 0.5rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            .navbar-brand {
+                font-size: 1rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .table-responsive table {
+                font-size: 0.8rem;
+            }
+            .btn-group {
+                flex-wrap: wrap;
+            }
+            .btn-group .btn {
+                margin-bottom: 0.25rem;
+            }
+        }
+        .stat-card {
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .bg-gradient-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .item-card {
+            transition: transform 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+        }
+        .overdue {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid #dc3545;
+        }
+        .expiring-soon {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid #ffc107;
+        }
+        .active {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid #28a745;
+        }
+        .footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Enhanced Button Feedback */
+        .btn {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow-hover);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        
+        .btn-success:hover {
+            background-color: #198754;
+            border-color: #157347;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc3545;
+            border-color: #bb2d3b;
+        }
+        
+        .btn-warning:hover {
+            background-color: #ffc107;
+            border-color: #ffca2c;
+            color: #000;
+        }
+        
+        .btn-info:hover {
+            background-color: #0dcaf0;
+            border-color: #31d2f2;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        
+        .btn-outline-success:hover {
+            background-color: #198754;
+            border-color: #198754;
+            color: white;
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        
+        /* Button ripple effect */
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Enhanced Card Hover */
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px var(--shadow-hover);
+        }
+        
+        /* Empty State Styles */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .empty-state-description {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-actions {
+            margin-top: 1.5rem;
+        }
+        
+        /* Active Navigation State */
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        
+        /* Dark mode specific overrides */
+        [data-theme="dark"] .alert-success {
+            background-color: rgba(25, 135, 84, 0.2);
+            border-color: rgba(25, 135, 84, 0.3);
+            color: #75b798;
+        }
+        
+        [data-theme="dark"] .alert-danger {
+            background-color: rgba(220, 53, 69, 0.2);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #ea868f;
+        }
+        
+        [data-theme="dark"] .alert-warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #ffda6a;
+        }
+        
+        [data-theme="dark"] .alert-info {
+            background-color: rgba(13, 202, 240, 0.2);
+            border-color: rgba(13, 202, 240, 0.3);
+            color: #6edff6;
+        }
+        
+        /* Dark mode Bootstrap component overrides */
+        [data-theme="dark"] .bg-light {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        /* Comprehensive dark mode table styling */
+        [data-theme="dark"] .table {
+            background-color: var(--table-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--table-border) !important;
+        }
+        
+        [data-theme="dark"] .table thead {
+            background-color: var(--bg-tertiary) !important;
+        }
+        
+        [data-theme="dark"] .table thead th {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--table-border) !important;
+            font-weight: 600;
+        }
+        
+        [data-theme="dark"] .table tbody td {
+            background-color: var(--table-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--table-border) !important;
+        }
+        
+        [data-theme="dark"] .table tbody tr:hover {
+            background-color: var(--table-hover) !important;
+        }
+        
+        [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        [data-theme="dark"] .table-striped tbody tr:nth-of-type(even) {
+            background-color: var(--table-bg) !important;
+        }
+        
+        [data-theme="dark"] .table-bordered {
+            border: 1px solid var(--table-border) !important;
+        }
+        
+        [data-theme="dark"] .table-bordered td,
+        [data-theme="dark"] .table-bordered th {
+            border: 1px solid var(--table-border) !important;
+        }
+        
+        [data-theme="dark"] .table-warning {
+            --bs-table-bg: rgba(255, 193, 7, 0.1);
+            --bs-table-color: var(--text-primary);
+            --bs-table-border-color: var(--table-border);
+            background-color: rgba(255, 193, 7, 0.1) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .table-success {
+            --bs-table-bg: rgba(25, 135, 84, 0.1);
+            --bs-table-color: var(--text-primary);
+            --bs-table-border-color: var(--table-border);
+            background-color: rgba(25, 135, 84, 0.1) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .table-danger {
+            --bs-table-bg: rgba(220, 53, 69, 0.1);
+            --bs-table-color: var(--text-primary);
+            --bs-table-border-color: var(--table-border);
+            background-color: rgba(220, 53, 69, 0.1) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .table-info {
+            --bs-table-bg: rgba(13, 202, 240, 0.1);
+            --bs-table-color: var(--text-primary);
+            --bs-table-border-color: var(--table-border);
+            background-color: rgba(13, 202, 240, 0.1) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .badge {
+            font-weight: 500;
+        }
+        
+        [data-theme="dark"] .badge.bg-primary {
+            background-color: #0d6efd !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-success {
+            background-color: #198754 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-danger {
+            background-color: #dc3545 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-info {
+            background-color: #0dcaf0 !important;
+            color: #000 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-secondary {
+            background-color: #6c757d !important;
+        }
+        
+        [data-theme="dark"] .border-primary {
+            border-color: #0d6efd !important;
+        }
+        
+        [data-theme="dark"] .border-success {
+            border-color: #198754 !important;
+        }
+        
+        [data-theme="dark"] .border-warning {
+            border-color: #ffc107 !important;
+        }
+        
+        [data-theme="dark"] .border-danger {
+            border-color: #dc3545 !important;
+        }
+        
+        [data-theme="dark"] .border-info {
+            border-color: #0dcaf0 !important;
+        }
+        
+        [data-theme="dark"] .border-secondary {
+            border-color: #6c757d !important;
+        }
+        
+        [data-theme="dark"] .text-primary {
+            color: #6ea8fe !important;
+        }
+        
+        [data-theme="dark"] .text-success {
+            color: #75b798 !important;
+        }
+        
+        [data-theme="dark"] .text-danger {
+            color: #ea868f !important;
+        }
+        
+        [data-theme="dark"] .text-warning {
+            color: #ffda6a !important;
+        }
+        
+        [data-theme="dark"] .text-info {
+            color: #6edff6 !important;
+        }
+        
+        [data-theme="dark"] .text-secondary {
+            color: #adb5bd !important;
+        }
+        
+        [data-theme="dark"] .pagination {
+            --bs-pagination-bg: var(--card-bg);
+            --bs-pagination-border-color: var(--border-color);
+            --bs-pagination-color: var(--text-primary);
+            --bs-pagination-hover-bg: var(--bg-tertiary);
+            --bs-pagination-hover-border-color: var(--border-color);
+            --bs-pagination-hover-color: var(--text-primary);
+            --bs-pagination-active-bg: #0d6efd;
+            --bs-pagination-active-border-color: #0d6efd;
+            --bs-pagination-disabled-bg: var(--card-bg);
+            --bs-pagination-disabled-border-color: var(--border-color);
+            --bs-pagination-disabled-color: var(--text-muted);
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .dropdown-menu {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .dropdown-item {
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* Additional dark mode improvements */
+        [data-theme="dark"] .img-thumbnail {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .btn-group .btn {
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background-color: var(--text-secondary);
+            border-color: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+        
+        [data-theme="dark"] .btn-outline-dark {
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .btn-outline-dark:hover {
+            background-color: var(--text-primary);
+            border-color: var(--text-primary);
+            color: var(--bg-primary);
+        }
+        
+        [data-theme="dark"] .breadcrumb {
+            background-color: transparent;
+        }
+        
+        [data-theme="dark"] .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+        
+        [data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+            color: var(--text-muted);
+        }
+        
+        [data-theme="dark"] .nav-tabs {
+            border-bottom-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link {
+            color: var(--text-secondary);
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link:hover {
+            border-color: var(--border-color) var(--border-color) var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link.active {
+            background-color: var(--card-bg);
+            border-color: var(--border-color) var(--border-color) var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        /* Table header specific dark mode styles */
+        [data-theme="dark"] .table thead th {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+            border-bottom: 2px solid var(--border-color) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Ensure table cells have proper contrast */
+        [data-theme="dark"] .table td {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .table .text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        /* Table responsive wrapper dark mode */
+        [data-theme="dark"] .table-responsive {
+            background-color: var(--table-bg);
+            border-radius: 0.375rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="bi bi-box-seam"></i> Home Inventory
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'locations' %}active{% endif %}" href="{% url 'locations:location_list' %}">
+                            <i class="bi bi-geo-alt"></i> Locations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'items' %}active{% endif %}" href="{% url 'items:item_list' %}">
+                            <i class="bi bi-box"></i> Items
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'scan_page' %}active{% endif %}" href="{% url 'locations:scan_page' %}">
+                            <i class="bi bi-upc-scan"></i> Scan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'lending' %}active{% endif %}" href="{% url 'lending:dashboard' %}">
+                            <i class="bi bi-arrow-left-right"></i> Lending
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'external_households' %}active{% endif %}" href="{% url 'users:external_households' %}">
+                            <i class="bi bi-link-45deg"></i> External
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'warranties' %}active{% endif %}" href="{% url 'warranties:warranty_list' %}">
+                            <i class="bi bi-shield-check"></i> Warranties
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'documents' %}active{% endif %}" href="{% url 'documents:document_list' %}">
+                            <i class="bi bi-file-earmark"></i> Documents
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'users:profile' %}">
+                            <i class="bi bi-person"></i> Profile
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+                            <i class="bi bi-moon-fill" id="themeIcon"></i>
+                        </button>
+                    </li>
+                    {% if is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:admin_manage_roles' %}">
+                            <i class="bi bi-people"></i> Roles
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}">
+                            <i class="bi bi-gear"></i> Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link btn btn-link text-decoration-none">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p>&copy; 2024 Home Inventory System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggle JavaScript -->
+    <script>
+        // Theme toggle functionality
+        function initTheme() {
+            // Get saved theme from localStorage or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const htmlElement = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            // Apply saved theme
+            if (savedTheme === 'dark') {
+                htmlElement.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'bi bi-sun-fill';
+            } else {
+                htmlElement.setAttribute('data-theme', 'light');
+                themeIcon.className = 'bi bi-moon-fill';
+            }
+        }
+        
+        function toggleTheme() {
+            const htmlElement = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // Apply new theme
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            if (newTheme === 'dark') {
+                themeIcon.className = 'bi bi-sun-fill';
+            } else {
+                themeIcon.className = 'bi bi-moon-fill';
+            }
+        }
+        
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            
+            // Add event listener to theme toggle button
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+        });
+        
+        // Also initialize immediately in case DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTheme);
+        } else {
+            initTheme();
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Document - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'documents:document_list' %}">Documents</a></li>
+                <li class="breadcrumb-item active">{{ action }} Document</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-file-earmark"></i> {{ action }} Document</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.item.id_for_label }}" class="form-label">Item</label>
+                        {{ form.item }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.document_type.id_for_label }}" class="form-label">Document Type</label>
+                        {{ form.document_type }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+                        {{ form.title }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">File</label>
+                        {{ form.file }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes }}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ action }}
+                        </button>
+                        <a href="{% if document %}{% url 'documents:document_detail' document.pk %}{% else %}{% url 'documents:document_list' %}{% endif %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

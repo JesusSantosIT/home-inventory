@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Category - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'items:item_list' %}">Items</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'items:category_list' %}">Categories</a></li>
+                <li class="breadcrumb-item active">Delete Category</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-trash"></i> Delete Category</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Are you sure you want to delete the category <strong>{{ category.name }}</strong>?
+                </div>
+                
+                <h5>Category Details</h5>
+                <ul>
+                    <li><strong>Name:</strong> {{ category.name }}</li>
+                    <li><strong>Parent:</strong> {{ category.parent.name|default:'None' }}</li>
+                    <li><strong>Items:</strong> {{ category.item_set.count }}</li>
+                    <li><strong>Children:</strong> {{ category.children.count }}</li>
+                </ul>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete
+                    </button>
+                    <a href="{% url 'items:category_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

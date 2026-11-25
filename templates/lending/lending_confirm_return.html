@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Return Item - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'lending:dashboard' %}">Lending Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'lending:detail' lending.pk %}">Lending Details</a></li>
+                <li class="breadcrumb-item active">Return Item</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-check-circle"></i> Return Item</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Confirm Return</h5>
+                    <p>Are you sure you want to mark <strong>"{{ lending.item.name }}"</strong> as returned?</p>
+                    
+                    <p><strong>Borrowed by:</strong> {{ lending.borrowed_by.username }}</p>
+                    <p><strong>Borrowed:</strong> {{ lending.borrowed_date|date:"F j, Y, g:i A" }}</p>
+                    <p><strong>Due:</strong> {{ lending.due_date|date:"F j, Y, g:i A" }}</p>
+                    
+                    {% if lending.is_overdue %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle"></i> This item is overdue by {{ lending.days_overdue }} days
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Yes, Mark as Returned
+                        </button>
+                        <a href="{% url 'lending:detail' lending.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

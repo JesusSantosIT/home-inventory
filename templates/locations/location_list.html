@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+
+{% block title %}Locations - Home Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tree-node {
+        margin-left: 20px;
+        border-left: 2px solid #dee2e6;
+        padding-left: 10px;
+    }
+    .tree-item {
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .tree-item:hover {
+        background-color: #f8f9fa;
+    }
+    .tree-item.expanded > .tree-toggle {
+        transform: rotate(90deg);
+    }
+    .tree-toggle {
+        transition: transform 0.2s;
+        display: inline-block;
+        width: 20px;
+    }
+    .badge-location {
+        font-size: 0.75rem;
+    }
+    .location-stats {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .draggable {
+        cursor: grab;
+    }
+    .draggable:active {
+        cursor: grabbing;
+    }
+    .dragging {
+        opacity: 0.5;
+        background-color: #e9ecef;
+    }
+    .drag-over {
+        background-color: #d1ecf1 !important;
+        border: 2px dashed #0c5460;
+    }
+    .drop-zone {
+        min-height: 40px;
+        border: 2px dashed transparent;
+        border-radius: 5px;
+        transition: all 0.2s;
+    }
+    .drop-zone.drag-over {
+        border-color: #0c5460;
+        background-color: #d1ecf1;
+    }
+    .drop-target.drag-over {
+        background-color: #d1ecf1 !important;
+        border: 2px dashed #0c5460;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-geo-alt"></i> Locations</h1>
+        <p class="text-muted">Structure: House Name > Room > Room Location > Box > Item</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-3">
+                        <label for="house-selector" class="form-label">Select House</label>
+                        <select id="house-selector" class="form-select" onchange="changeHouse()">
+                            <option value="">-- All Houses --</option>
+                            {% for house in houses %}
+                                <option value="{{ house.pk }}" {% if selected_house and selected_house.pk == house.pk %}selected{% endif %}>
+                                    {{ house.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="type-filter" class="form-label">Filter by Type</label>
+                        <select id="type-filter" class="form-select" onchange="changeHouse()">
+                            <option value="">All Types</option>
+                            <option value="house" {% if location_type_filter == 'house' %}selected{% endif %}>House</option>
+                            <option value="room" {% if location_type_filter == 'room' %}selected{% endif %}>Room</option>
+                            <option value="room_location" {% if location_type_filter == 'room_location' %}selected{% endif %}>Room Location</option>
+                            <option value="box" {% if location_type_filter == 'box' %}selected{% endif %}>Box</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="search-input" class="form-label">Search</label>
+                        <div class="input-group">
+                            <input type="text" id="search-input" class="form-control" placeholder="Search by name..." value="{{ search_query }}">
+                            <button class="btn btn-primary" type="button" onclick="changeHouse()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <div class="mt-4">
+                            <a href="{% url 'locations:import_locations' %}" class="btn btn-success">
+                                <i class="bi bi-upload"></i> Import
+                            </a>
+                            {% if selected_house %}
+                            {% if is_editor %}
+                            <a href="{% url 'locations:location_create_child' selected_house.pk %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Create Location
+                            </a>
+                            {% endif %}
+                            {% else %}
+                            {% if is_editor %}
+                            <a href="{% url 'locations:location_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Create Location
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    {% if is_searching %}
+                    Found {{ total_count }} locations matching "{{ search_query }}"
+                    {% else %}
+                    Showing {{ root_locations|length }} of {{ total_count }} locations
+                    {% if selected_house %} in {{ selected_house.name }}{% endif %}
+                    {% endif %}
+                </div>
+                
+                {% if is_searching %}
+                <!-- Search results view -->
+                <div class="mt-4">
+                    <div class="list-group">
+                        {% for location in search_results %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-{% if location.location_type == 'house' %}house{% elif location.location_type == 'room' %}door-open{% elif location.location_type == 'room_location' %}pin-map{% elif location.location_type == 'box' %}box{% else %}geo-alt{% endif %}"></i>
+                                <strong>{{ location.name }}</strong>
+                                <span class="badge bg-info badge-location ms-2">{{ location.get_location_type_display }}</span>
+                                {% if location.has_barcode %}
+                                <span class="badge bg-secondary badge-location">{{ location.barcode }}</span>
+                                {% endif %}
+                                <br><small class="text-muted">{{ location.tree_path_label }}</small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'locations:location_detail' location.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'locations:location_create_child' location.pk %}" class="btn btn-outline-success">
+                                    <i class="bi bi-plus"></i>
+                                </a>
+                                {% if location.has_barcode %}
+                                <a href="{% url 'locations:generate_barcode' location.pk %}" class="btn btn-outline-info">
+                                    <i class="bi bi-upc-scan"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Pagination for search results -->
+                {% if search_results.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if search_results.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}search={{ search_query }}&page=1">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}search={{ search_query }}&page={{ search_results.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ search_results.number }} <span class="sr-only">(current)</span></span>
+                        </li>
+                        
+                        {% if search_results.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}search={{ search_query }}&page={{ search_results.next_page_number }}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}search={{ search_query }}&page={{ search_results.paginator.num_pages }}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <!-- Tree view -->
+                <div class="mt-4 drop-zone" id="location-tree" data-parent-id="root">
+                    {% for location in root_locations %}
+                        {% include 'locations/tree_node.html' with location=location level=0 %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination for tree view -->
+                {% if root_locations.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if root_locations.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page=1">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ root_locations.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ root_locations.number }} <span class="sr-only">(current)</span></span>
+                        </li>
+                        
+                        {% if root_locations.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ root_locations.next_page_number }}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_house %}house={{ selected_house.pk }}&{% endif %}{% if location_type_filter %}type={{ location_type_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ root_locations.paginator.num_pages }}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% endif %}
+                
+                {% if is_searching %}
+                    {% if search_results.paginator.count == 0 %}
+                    {% include 'components/empty_state.html' with icon='bi-search' title='No Locations Found' description='No locations match your search for "{{ search_query }}". Try a different search term.' action_url='locations:location_list' action_text='Clear Search' action_icon='bi-arrow-counterclockwise' %}
+                    {% endif %}
+                {% else %}
+                    {% if root_locations.paginator.count == 0 %}
+                    {% include 'components/empty_state.html' with icon='bi-geo-alt' title='No Locations Yet' description='You haven\'t created any locations yet. Locations help you organize your items by house, room, and storage area.' action_url='locations:location_create' action_text='Create Your First Location' action_icon='bi-plus-circle' %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Location Modal -->
+<input type="hidden" id="csrfTokenInput" value="{{ csrf_token }}">
+<div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moveModalLabel">Move Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Moving: <strong id="moveLocationName"></strong></p>
+                <div class="mb-3">
+                    <label for="newParentSelect" class="form-label">New Parent Location</label>
+                    <select class="form-select" id="newParentSelect">
+                        <option value="">-- Root Level (No Parent) --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMove()">Move</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ movable_locations|json_script:"locations-data" }}
+<script>
+    function changeHouse() {
+        const houseId = document.getElementById('house-selector').value;
+        const typeFilter = document.getElementById('type-filter').value;
+        const searchQuery = document.getElementById('search-input').value;
+        let url = '{% url 'locations:location_list' %}';
+        const params = new URLSearchParams();
+        
+        if (houseId) {
+            params.append('house', houseId);
+        }
+        if (typeFilter) {
+            params.append('type', typeFilter);
+        }
+        if (searchQuery) {
+            params.append('search', searchQuery);
+        }
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        window.location.href = url;
+    }
+    
+    // Search on Enter key
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            changeHouse();
+        }
+    });
+    
+    // Toggle tree node expansion
+    function toggleNode(nodeId) {
+        const node = document.getElementById('node-' + nodeId);
+        const toggle = document.getElementById('toggle-' + nodeId);
+
+        if (node.style.display === 'none') {
+            node.style.display = 'block';
+            toggle.style.transform = 'rotate(90deg)';
+        } else {
+            node.style.display = 'none';
+            toggle.style.transform = 'rotate(0deg)';
+        }
+        saveExpandedState();
+    }
+
+    // Load child nodes via AJAX (lazy tree loading). Returns a promise so
+    // restoreExpandedState() can sequence nested expansions.
+    function loadChildren(nodeId) {
+        const childrenContainer = document.getElementById('children-' + nodeId);
+        if (!childrenContainer) return Promise.resolve();
+        if (childrenContainer.innerHTML.trim() !== '') return Promise.resolve();
+        return fetch(`/locations/${nodeId}/children/`)
+            .then(response => response.text())
+            .then(html => {
+                childrenContainer.innerHTML = html;
+            });
+    }
+
+    // --- Expansion state persistence -------------------------------------
+    // Remember which nodes are expanded so the tree can be restored after
+    // the page reload that follows a move operation.
+    const EXPANDED_KEY = 'locationTreeExpanded';
+
+    function getExpandedNodeIds() {
+        const ids = [];
+        document.querySelectorAll('.tree-node').forEach(n => {
+            if (n.id.startsWith('node-') && n.style.display !== 'none') {
+                ids.push(n.id.slice(5));
+            }
+        });
+        return ids;
+    }
+
+    function saveExpandedState() {
+        try {
+            localStorage.setItem(EXPANDED_KEY, JSON.stringify(getExpandedNodeIds()));
+        } catch (e) { /* storage unavailable */ }
+    }
+
+    // Re-expand nodes that were open before a reload. Ids are stored in
+    // document order (parents before children); awaiting each fetch ensures
+    // a child's container exists before we try to expand it. Nodes that no
+    // longer have children (e.g. after a move emptied them) are skipped so
+    // they don't render as empty drop-zone boxes.
+    async function restoreExpandedState() {
+        let ids = [];
+        try {
+            ids = JSON.parse(localStorage.getItem(EXPANDED_KEY) || '[]');
+        } catch (e) { return; }
+        for (const id of ids) {
+            const node = document.getElementById('node-' + id);
+            const toggle = document.getElementById('toggle-' + id);
+            // toggle only gets an onclick when the node has children
+            if (!node || !toggle || !toggle.getAttribute('onclick')) continue;
+            if (node.style.display !== 'none') continue;
+            toggleNode(id);
+            await loadChildren(id);
+        }
+        // Prune ids that no longer correspond to expanded nodes
+        saveExpandedState();
+    }
+
+    // --- Drag and drop ----------------------------------------------------
+    let draggedLocationId = null;
+    let draggedPath = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initDragAndDrop();
+        restoreExpandedState();
+    });
+
+    // Resolve what a drag event is hovering: a location row means "drop INTO
+    // that location", a children container means "drop into that node's
+    // parent location", and #location-tree means "drop at root level".
+    function resolveDropContext(e) {
+        const dropTarget = e.target.closest('.drop-target');
+        if (dropTarget) {
+            return {
+                el: dropTarget,
+                locId: dropTarget.getAttribute('data-location-id'),
+                path: dropTarget.getAttribute('data-path')
+            };
+        }
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+            return {
+                el: dropZone,
+                locId: dropZone.getAttribute('data-parent-id'),
+                path: dropZone.getAttribute('data-path')
+            };
+        }
+        return null;
+    }
+
+    // treebeard paths are prefix-hierarchical: a node's path prefixes all of
+    // its descendants' paths, so startsWith() detects self + descendants.
+    function isValidDrop(ctx) {
+        if (!ctx || !draggedLocationId) return false;
+        if (ctx.locId === 'root' || !ctx.locId) return true;
+        if (ctx.locId == draggedLocationId) return false;
+        if (ctx.path && draggedPath && ctx.path.startsWith(draggedPath)) return false;
+        return true;
+    }
+    
+    function initDragAndDrop() {
+        document.body.addEventListener('dragstart', function(e) {
+            const draggable = e.target.closest('.draggable');
+            if (draggable) {
+                draggedLocationId = draggable.getAttribute('data-location-id');
+                draggedPath = draggable.getAttribute('data-path');
+                draggable.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedLocationId || '');
+            }
+        });
+
+        document.body.addEventListener('dragend', function(e) {
+            const draggable = e.target.closest('.draggable');
+            if (draggable) {
+                draggable.classList.remove('dragging');
+            }
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            draggedLocationId = null;
+            draggedPath = null;
+        });
+
+        document.body.addEventListener('dragover', function(e) {
+            const ctx = resolveDropContext(e);
+            if (!ctx || !isValidDrop(ctx)) return;  // no preventDefault -> "no drop" cursor
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            ctx.el.classList.add('drag-over');
+        });
+
+        document.body.addEventListener('dragleave', function(e) {
+            const ctx = e.target.closest('.drop-target') || e.target.closest('.drop-zone');
+            if (ctx && !(e.relatedTarget && ctx.contains(e.relatedTarget))) {
+                ctx.classList.remove('drag-over');
+            }
+        });
+
+        document.body.addEventListener('drop', function(e) {
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            const ctx = resolveDropContext(e);
+            if (!ctx) return;
+            e.preventDefault();
+            if (!isValidDrop(ctx)) return;
+            const newParentId = (ctx.locId === 'root' || !ctx.locId) ? 'root' : ctx.locId;
+            executeMove(newParentId);
+        });
+    }
+
+    function executeMove(newParentId) {
+        // Don't allow dropping on yourself
+        if (newParentId == draggedLocationId) {
+            return;
+        }
+
+        // CSRF token is rendered server-side (the csrftoken cookie is HttpOnly
+        // and cannot be read from JavaScript)
+        const csrfToken = document.getElementById('csrfTokenInput').value;
+
+        // Send AJAX request to move location
+        const formData = new FormData();
+        formData.append('location_id', draggedLocationId);
+        formData.append('new_parent_id', newParentId);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        fetch('{% url "locations:move_location" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Preserve expanded nodes across the reload so the moved
+                // location is visible in its new position
+                saveExpandedState();
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while moving the location');
+        });
+    }
+
+    // --- Move modal --------------------------------------------------------
+    let currentMoveLocationId = null;
+    const MOVABLE_LOCATIONS = JSON.parse(document.getElementById('locations-data').textContent);
+
+    function openMoveModal(locationId) {
+        currentMoveLocationId = locationId;
+        const moved = MOVABLE_LOCATIONS.find(l => l.id === locationId);
+        document.getElementById('moveLocationName').textContent = moved ? moved.name : '';
+
+        // Populate parent select with ALL locations (not just loaded tree
+        // nodes), showing full paths. Excludes the node itself and its
+        // descendants via treebeard path prefix matching.
+        const select = document.getElementById('newParentSelect');
+        select.innerHTML = '';
+        const rootOpt = document.createElement('option');
+        rootOpt.value = '';
+        rootOpt.textContent = '-- Root Level (No Parent) --';
+        select.appendChild(rootOpt);
+
+        MOVABLE_LOCATIONS.forEach(loc => {
+            if (moved && loc.path.startsWith(moved.path)) return;
+            const opt = document.createElement('option');
+            opt.value = loc.id;
+            opt.textContent = loc.label;
+            select.appendChild(opt);
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('moveModal'));
+        modal.show();
+    }
+
+    function confirmMove() {
+        const newParentId = document.getElementById('newParentSelect').value || 'root';
+
+        if (newParentId == currentMoveLocationId) {
+            alert('Cannot move to itself');
+            return;
+        }
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('moveModal'));
+        modal.hide();
+
+        // Execute move
+        draggedLocationId = currentMoveLocationId;
+        executeMove(newParentId);
+    }
+</script>
+{% endblock %}

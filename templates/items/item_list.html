@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+
+{% block title %}Items - Home Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-card {
+        transition: all 0.2s ease;
+    }
+    .item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-box"></i> Items</h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4 d-none d-md-flex">
+    <div class="col-md-4">
+        <div class="card item-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-box text-primary fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Total Items</h6>
+                        <div class="stat-number text-primary">{{ total_items }}</div>
+                        <small class="text-muted">In inventory</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card item-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-currency-dollar text-success fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Total Value</h6>
+                        <div class="stat-number text-success">${{ total_value|floatformat:0 }}</div>
+                        <small class="text-muted">Current value</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card item-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-box-arrow-up text-warning fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Borrowed</h6>
+                        <div class="stat-number text-warning">{{ borrowed_count }}</div>
+                        <small class="text-muted">Currently lent out</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Stats Bar -->
+<div class="row mb-3 d-md-none">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body py-2">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ total_items }}</div>
+                        <small class="text-muted">Items</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-success">${{ total_value|floatformat:0 }}</div>
+                        <small class="text-muted">Value</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-warning">{{ borrowed_count }}</div>
+                        <small class="text-muted">Borrowed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-0"><i class="bi bi-search"></i> Search & Filter</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{% url 'items:label_template_list' %}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-printer"></i> Label Templates
+                        </a>
+                        <a href="{% url 'items:print_bulk_labels' %}" class="btn btn-success btn-sm">
+                            <i class="bi bi-printer"></i> Print Labels
+                        </a>
+                        <a href="{% url 'items:import_items' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-upload"></i> Import
+                        </a>
+                        <a href="{% url 'items:export_csv' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-file-earmark-csv"></i> Export CSV
+                        </a>
+                        <a href="{% url 'items:export_pdf' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                        </a>
+                        {% if is_editor %}
+                        <a href="{% url 'items:item_create' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Add Item
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" name="search" class="form-control" placeholder="Search items..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="location" class="form-select">
+                            <option value="">All Locations</option>
+                            {% for location in locations %}
+                                <option value="{{ location.pk }}" {% if location.pk|stringformat:"s" == location_filter %}selected{% endif %}>
+                                    {{ location.indented_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.pk }}" {% if category.pk|stringformat:"s" == category_filter %}selected{% endif %}>
+                                    {{ category.get_full_path }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="condition" class="form-select">
+                            <option value="">All Conditions</option>
+                            <option value="new" {% if condition_filter == 'new' %}selected{% endif %}>New</option>
+                            <option value="excellent" {% if condition_filter == 'excellent' %}selected{% endif %}>Excellent</option>
+                            <option value="good" {% if condition_filter == 'good' %}selected{% endif %}>Good</option>
+                            <option value="fair" {% if condition_filter == 'fair' %}selected{% endif %}>Fair</option>
+                            <option value="poor" {% if condition_filter == 'poor' %}selected{% endif %}>Poor</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+                            <option value="borrowed" {% if status_filter == 'borrowed' %}selected{% endif %}>Borrowed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" name="sort" value="{{ sort_field }}">
+                    <input type="hidden" name="dir" value="{{ sort_dir }}">
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-3 d-flex align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="low_stock" value="1" id="low_stock" {% if low_stock_filter %}checked{% endif %}>
+                            <label class="form-check-label" for="low_stock">
+                                <i class="bi bi-exclamation-triangle text-warning"></i> Low stock only
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label small text-muted mb-1">Date added from</label>
+                        <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label small text-muted mb-1">Date added to</label>
+                        <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Items Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul"></i> Items ({{ items.paginator.count }})
+                    </h5>
+                </div>
+                
+                {% if items %}
+                <form method="post" action="{% url 'items:item_bulk_action' %}" id="bulk-items-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if is_editor %}
+                    <div id="bulk-bar" class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="display:none; background-color: var(--bg-tertiary);">
+                        <span class="small fw-bold"><span id="selected-count">0</span> selected</span>
+                        <button type="submit" name="action" value="allow_lending" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-share"></i> Allow Lending
+                        </button>
+                        <button type="submit" name="action" value="disallow_lending" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-slash-circle"></i> Disallow Lending
+                        </button>
+                        <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete the selected items? Items currently borrowed will be skipped. This cannot be undone.')">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                    {% endif %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    {% if is_editor %}
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" id="select-all-items" class="form-check-input" title="Select all on this page">
+                                    </th>
+                                    {% endif %}
+                                    <th>Image</th>
+                                    <th><a href="{{ sort_urls.name }}" class="text-reset text-decoration-none">Name{% if sort_field == 'name' %} <i class="bi bi-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %}-short"></i>{% endif %}</a></th>
+                                    <th><a href="{{ sort_urls.location }}" class="text-reset text-decoration-none">Location{% if sort_field == 'location' %} <i class="bi bi-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %}-short"></i>{% endif %}</a></th>
+                                    <th>Category</th>
+                                    <th>Serial</th>
+                                    <th><a href="{{ sort_urls.value }}" class="text-reset text-decoration-none">Value{% if sort_field == 'value' %} <i class="bi bi-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %}-short"></i>{% endif %}</a></th>
+                                    <th><a href="{{ sort_urls.condition }}" class="text-reset text-decoration-none">Condition{% if sort_field == 'condition' %} <i class="bi bi-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %}-short"></i>{% endif %}</a></th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr class="{% if item.has_active_lending %}table-warning{% endif %}">
+                                    {% if is_editor %}
+                                    <td><input type="checkbox" name="item_ids" value="{{ item.pk }}" class="form-check-input item-select"></td>
+                                    {% endif %}
+                                    <td>
+                                        {% if item.images.first %}
+                                            {% with item.images.first as first_image %}
+                                                <a href="{% url 'items:item_detail' item.pk %}">
+                                                    {% if first_image.thumbnail %}
+                                                        <img src="{{ first_image.thumbnail.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" loading="lazy">
+                                                    {% else %}
+                                                        <img src="{{ first_image.image.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" loading="lazy">
+                                                    {% endif %}
+                                                </a>
+                                            {% endwith %}
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 4px; background-color: var(--bg-tertiary);">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'items:item_detail' item.pk %}" class="text-decoration-none fw-bold">
+                                            {{ item.name }}
+                                        </a>
+                                        {% if item.available_for_lending %}
+                                        <span class="badge bg-success ms-1" title="Available for external lending">
+                                            <i class="bi bi-share"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if item.brand %}
+                                            <br><small class="text-muted">{{ item.brand }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.location %}
+                                            <a href="{% url 'locations:location_detail' item.location.pk %}" class="text-decoration-none text-muted">
+                                                {{ item.location.name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.categories.first %}
+                                            <span class="badge bg-secondary">{{ item.categories.first.name }}</span>
+                                            {% if item.categories.count > 1 %}
+                                                <span class="text-muted">+{{ item.categories.count|add:"-1" }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted">{{ item.serial_number|default:'-' }}</td>
+                                    <td>
+                                        {% if item.current_value %}
+                                            <strong>${{ item.current_value|floatformat:0 }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if item.condition == 'new' %}success{% elif item.condition == 'excellent' %}primary{% elif item.condition == 'good' %}info{% elif item.condition == 'fair' %}warning{% else %}danger{% endif %}">
+                                            {{ item.get_condition_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if item.has_active_lending %}
+                                            <span class="badge bg-warning">Borrowed</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'items:print_label' item.pk %}" class="btn btn-outline-info" title="Print Label">
+                                                <i class="bi bi-printer"></i>
+                                            </a>
+                                            <a href="{% url 'items:item_detail' item.pk %}" class="btn btn-outline-primary" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'items:item_update' item.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'items:generate_barcode' item.pk %}" class="btn btn-outline-info" title="Barcode">
+                                                <i class="bi bi-upc-scan"></i>
+                                            </a>
+                                            <a href="{% url 'items:generate_qr_code' item.pk %}" class="btn btn-outline-dark" title="QR Code">
+                                                <i class="bi bi-qr-code"></i>
+                                            </a>
+                                            {% if is_editor %}
+                                            <a href="{% url 'items:item_delete' item.pk %}" class="btn btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-box-seam' title='No Items Found' description='No items match your current search or filters. Try adjusting your criteria or add a new item.' action_url='items:item_list' action_text='Clear Filters' action_icon='bi-arrow-counterclockwise' %}
+                    {% if is_editor %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'items:item_create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Add New Item
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                <!-- Pagination -->
+                {% if items.paginator.count > 0 %}
+                <div class="text-center text-muted mb-2">
+                    <small>Showing {{ items.start_index }} to {{ items.end_index }} of {{ items.paginator.count }} items</small>
+                </div>
+                {% endif %}
+                {% if items.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-2">
+                    <ul class="pagination justify-content-center">
+                        {% if items.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="{% querystring page=1 %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="{% querystring page=items.previous_page_number %}">Previous</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">First</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for p in page_range %}
+                            {% if p == '…' %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% elif p == items.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ p }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{% querystring page=p %}">{{ p }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if items.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{% querystring page=items.next_page_number %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="{% querystring page=items.paginator.num_pages %}">Last</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Last</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const selectAll = document.getElementById('select-all-items');
+    if (!selectAll) return;
+    const checkboxes = document.querySelectorAll('.item-select');
+    const bulkBar = document.getElementById('bulk-bar');
+    const selectedCount = document.getElementById('selected-count');
+
+    function updateBar() {
+        const n = document.querySelectorAll('.item-select:checked').length;
+        selectedCount.textContent = n;
+        bulkBar.style.display = n > 0 ? 'flex' : 'none';
+        selectAll.checked = n > 0 && n === checkboxes.length;
+        selectAll.indeterminate = n > 0 && n < checkboxes.length;
+    }
+
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateBar();
+    });
+    checkboxes.forEach(cb => cb.addEventListener('change', updateBar));
+})();
+</script>
+{% endblock %}

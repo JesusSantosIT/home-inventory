@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Item - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'items:item_list' %}">Items</a></li>
+                <li class="breadcrumb-item active">{{ action }} Item</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-box"></i> {{ action }} Item</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                            {{ form.name }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity</label>
+                            {{ form.quantity }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.min_quantity.id_for_label }}" class="form-label">Min Quantity (Low Stock Alert)</label>
+                            {{ form.min_quantity }}
+                            <small class="form-text text-muted">Alert when quantity falls below this threshold</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.condition.id_for_label }}" class="form-label">Condition</label>
+                            {{ form.condition }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.available_for_lending }}
+                            <label class="form-check-label" for="{{ form.available_for_lending.id_for_label }}">
+                                Available for Lending (Allow external users to borrow)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                        {{ form.location }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Categories</label>
+                        <div class="p-3 border rounded">
+                            {% for choice in form.categories %}
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.serial_number.id_for_label }}" class="form-label">Serial Number</label>
+                            {{ form.serial_number }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.brand.id_for_label }}" class="form-label">Brand</label>
+                            {{ form.brand }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.model.id_for_label }}" class="form-label">Model</label>
+                            {{ form.model }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
+                            {{ form.purchase_date }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
+                            {{ form.purchase_date }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.purchase_price.id_for_label }}" class="form-label">Purchase Price</label>
+                            {{ form.purchase_price }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.current_value.id_for_label }}" class="form-label">Current Value</label>
+                            {{ form.current_value }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.barcode.id_for_label }}" class="form-label">Barcode (auto-generated if blank)</label>
+                            {{ form.barcode }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.qr_code.id_for_label }}" class="form-label">QR Code (auto-generated if blank)</label>
+                        {{ form.qr_code }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Images</label>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-info" onclick="openCamera()">
+                                <i class="bi bi-camera"></i> Take Photo
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('images').click()">
+                                <i class="bi bi-upload"></i> Upload from Device
+                            </button>
+                        </div>
+                        <input type="file" name="images" id="images" multiple accept="image/*" class="form-control" style="display: none;">
+                        <small class="form-text text-muted">You can upload multiple images or take photos with your camera. The first image will be set as primary.</small>
+                        
+                        <!-- Camera Modal -->
+                        <div class="modal fade" id="cameraModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Take Photo</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <video id="cameraFeed" autoplay playsinline style="width: 100%;"></video>
+                                        <canvas id="cameraCanvas" style="display: none;"></canvas>
+                                        <div id="capturedPreview" style="display: none; margin-top: 10px;">
+                                            <img id="capturedImage" style="width: 100%; border-radius: 5px;">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" id="captureBtn" onclick="capturePhoto()">
+                                            <i class="bi bi-camera"></i> Capture
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="savePhotoBtn" onclick="savePhoto()" style="display: none;">
+                                            <i class="bi bi-check"></i> Save Photo
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="retakeBtn" onclick="retakePhoto()" style="display: none;">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Retake
+                                        </button>
+                                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="stopCamera()">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview of captured/uploaded images -->
+                        <div id="imagePreview" class="mt-3 row"></div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ action }}
+                        </button>
+                        <a href="{% if item %}{% url 'items:item_detail' item.pk %}{% else %}{% url 'items:item_list' %}{% endif %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cameraStream = null;
+    let capturedBlob = null;
+    let photoCounter = 0;
+    
+    function openCamera() {
+        const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+        modal.show();
+        
+        // Start camera when modal is shown
+        document.getElementById('cameraModal').addEventListener('shown.bs.modal', startCamera, { once: true });
+    }
+    
+    async function startCamera() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' },
+                audio: false 
+            });
+            const video = document.getElementById('cameraFeed');
+            video.srcObject = cameraStream;
+            video.play();
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Unable to access camera. Please ensure camera permissions are granted.');
+            bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
+        }
+    }
+    
+    function capturePhoto() {
+        const video = document.getElementById('cameraFeed');
+        const canvas = document.getElementById('cameraCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        
+        canvas.toBlob((blob) => {
+            capturedBlob = blob;
+            const img = document.getElementById('capturedImage');
+            img.src = URL.createObjectURL(blob);
+            
+            document.getElementById('cameraFeed').style.display = 'none';
+            document.getElementById('capturedPreview').style.display = 'block';
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('savePhotoBtn').style.display = 'inline-block';
+            document.getElementById('retakeBtn').style.display = 'inline-block';
+        }, 'image/jpeg', 0.85);
+    }
+    
+    function savePhoto() {
+        if (capturedBlob) {
+            const file = new File([capturedBlob], `camera_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            const filesInput = document.getElementById('images');
+            
+            // Add existing files
+            for (let i = 0; i < filesInput.files.length; i++) {
+                dataTransfer.items.add(filesInput.files[i]);
+            }
+            
+            // Add new photo
+            dataTransfer.items.add(file);
+            filesInput.files = dataTransfer.files;
+            
+            // Add to preview
+            addImagePreview(file);
+            
+            // Close modal and stop camera
+            stopCamera();
+            bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
+        }
+    }
+    
+    function retakePhoto() {
+        document.getElementById('cameraFeed').style.display = 'block';
+        document.getElementById('capturedPreview').style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'inline-block';
+        document.getElementById('savePhotoBtn').style.display = 'none';
+        document.getElementById('retakeBtn').style.display = 'none';
+        capturedBlob = null;
+    }
+    
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        // Reset modal state
+        document.getElementById('cameraFeed').style.display = 'block';
+        document.getElementById('capturedPreview').style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'inline-block';
+        document.getElementById('savePhotoBtn').style.display = 'none';
+        document.getElementById('retakeBtn').style.display = 'none';
+        capturedBlob = null;
+    }
+    
+    // Handle file input changes for uploaded images
+    document.getElementById('images').addEventListener('change', function(e) {
+        const files = e.target.files;
+        for (let i = 0; i < files.length; i++) {
+            addImagePreview(files[i]);
+        }
+    });
+    
+    function addImagePreview(file) {
+        const preview = document.getElementById('imagePreview');
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 mb-2';
+            col.innerHTML = `
+                <div class="position-relative">
+                    <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;">
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="this.parentElement.parentElement.remove();">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            preview.appendChild(col);
+        };
+        
+        reader.readAsDataURL(file);
+    }
+</script>
+{% endblock %}

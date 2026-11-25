@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Item - {{ household.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for crumb in breadcrumbs %}
+                <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+                    {% if crumb.url %}<a href="{{ crumb.url }}">{{ crumb.name }}</a>{% else %}{{ crumb.name }}{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        <h1><i class="bi bi-box-arrow-in-right"></i> Request Item from {{ household.name }}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                {% if item_info %}
+                <div class="alert alert-info">
+                    <strong>{{ item_info.name }}</strong><br>
+                    <small>
+                        {{ item_info.available }} of {{ item_info.quantity }} available
+                        {% if item_info.location %} · {{ item_info.location }}{% endif %}
+                        {% if item_info.brand %} · {{ item_info.brand }}{% if item_info.model %} {{ item_info.model }}{% endif %}{% endif %}
+                    </small>
+                </div>
+                {% endif %}
+
+                {% if result %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> {{ result.message|default:"Request submitted successfully." }}
+                </div>
+                {% endif %}
+
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item_id }}">
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" name="quantity" id="quantity" class="form-control" min="1" value="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="borrower_name" class="form-label">Borrower Name</label>
+                        <input type="text" name="borrower_name" id="borrower_name" class="form-control" required
+                               value="{{ default_borrower }}" placeholder="Name of person borrowing">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Due Date (Optional)</label>
+                        <input type="date" name="due_date" id="due_date" class="form-control">
+                        <small class="form-text text-muted">Leave empty for the remote default (30 days)</small>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" {% if not item_id %}disabled{% endif %}>
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                        <a href="{% url 'users:external_household_items' household.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Items
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

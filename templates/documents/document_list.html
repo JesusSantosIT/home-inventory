@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Documents - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-file-earmark"></i> Documents</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title"><i class="bi bi-list"></i> Document List</h5>
+                    <a href="{% url 'documents:document_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Upload Document
+                    </a>
+                </div>
+                
+                {% if documents %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Item</th>
+                                    <th>Uploaded</th>
+                                    <th>Uploaded By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in documents %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ document.title }}</strong>
+                                        {% if document.notes %}
+                                        <br><small class="text-muted">{{ document.notes }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if document.document_type == 'receipt' %}success{% elif document.document_type == 'warranty' %}primary{% elif document.document_type == 'manual' %}info{% else %}secondary{% endif %}">
+                                            {{ document.get_document_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'items:item_detail' document.item.pk %}">{{ document.item.name }}</a>
+                                    </td>
+                                    <td>{{ document.uploaded_at|date:"F j, Y" }}</td>
+                                    <td>{% if document.uploaded_by %}{{ document.uploaded_by.username }}{% else %}N/A{% endif %}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'documents:document_download' document.pk %}" class="btn btn-outline-primary">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            <a href="{% url 'documents:document_detail' document.pk %}" class="btn btn-outline-secondary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'documents:document_update' document.pk %}" class="btn btn-outline-info">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'documents:document_delete' document.pk %}" class="btn btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-file-earmark' title='No Documents' description='No documents have been uploaded yet. Upload receipts, manuals, and other important documents to keep them organized with your items.' action_url='documents:document_create' action_text='Upload Your First Document' action_icon='bi-upload' %}
+                {% endif %}
+
+                {% if documents.has_other_pages %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if documents.has_previous %}
+                        <li class="page-item"><a class="page-link" href="{% querystring page=documents.previous_page_number %}">Previous</a></li>
+                        {% endif %}
+                        <li class="page-item disabled"><span class="page-link">Page {{ documents.number }} of {{ documents.paginator.num_pages }}</span></li>
+                        {% if documents.has_next %}
+                        <li class="page-item"><a class="page-link" href="{% querystring page=documents.next_page_number %}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

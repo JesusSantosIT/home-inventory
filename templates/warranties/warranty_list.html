@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Warranties - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-shield-check"></i> Warranties</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title"><i class="bi bi-list"></i> Warranty List</h5>
+                    <div class="btn-group">
+                        <a href="?expiring=true" class="btn btn-warning">
+                            <i class="bi bi-clock"></i> Show Expiring Soon
+                        </a>
+                        <a href="?expired=true" class="btn btn-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Show Expired
+                        </a>
+                        <a href="?" class="btn btn-secondary">
+                            <i class="bi bi-list"></i> Show All
+                        </a>
+                    </div>
+                </div>
+                
+                {% if warranties %}
+                    <div class="row">
+                        {% for warranty in warranties %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card {% if not warranty.is_active %}border-danger{% elif warranty.is_expiring_soon %}border-warning{% else %}border-success{% endif %}">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-box"></i> {{ warranty.item.name }}
+                                    </h5>
+                                    <p class="card-text">
+                                        <strong>Provider:</strong> {{ warranty.provider }}
+                                    </p>
+                                    {% if warranty.policy_number %}
+                                    <p class="card-text">
+                                        <strong>Policy Number:</strong> {{ warranty.policy_number }}
+                                    </p>
+                                    {% endif %}
+                                    <p class="card-text">
+                                        <strong>Expiration Date:</strong> {{ warranty.expiration_date|date:"F j, Y" }}
+                                    </p>
+                                    {% if warranty.is_active %}
+                                    <p class="card-text">
+                                        <span class="badge bg-success">Active ({{ warranty.days_remaining }} days remaining)</span>
+                                    </p>
+                                    {% else %}
+                                    <p class="card-text">
+                                        <span class="badge bg-danger">Expired</span>
+                                    </p>
+                                    {% endif %}
+                                    <div class="mt-3">
+                                        <a href="{% url 'warranties:warranty_detail' warranty.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                        <a href="{% url 'warranties:warranty_update' warranty.pk %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a href="{% url 'warranties:warranty_delete' warranty.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-shield-check' title='No Warranties' description='No warranties have been added yet. Add warranties to your items to track coverage and expiration dates.' %}
+                {% endif %}
+
+                {% if warranties.has_other_pages %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if warranties.has_previous %}
+                        <li class="page-item"><a class="page-link" href="{% querystring page=warranties.previous_page_number %}">Previous</a></li>
+                        {% endif %}
+                        <li class="page-item disabled"><span class="page-link">Page {{ warranties.number }} of {{ warranties.paginator.num_pages }}</span></li>
+                        {% if warranties.has_next %}
+                        <li class="page-item"><a class="page-link" href="{% querystring page=warranties.next_page_number %}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

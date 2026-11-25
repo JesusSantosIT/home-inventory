@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Document - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'documents:document_list' %}">Documents</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'documents:document_detail' document.pk %}">Document Details</a></li>
+                <li class="breadcrumb-item active">Delete</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-trash"></i> Delete Document</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Are you sure?</h5>
+                    <p>You are about to delete <strong>"{{ document.title }}"</strong>.</p>
+                    
+                    <p><strong>Type:</strong> {{ document.get_document_type_display }}</p>
+                    <p><strong>Item:</strong> {{ document.item.name }}</p>
+                    <p><strong>File:</strong> {{ document.file.name }}</p>
+                    
+                    <hr>
+                    <p class="mb-0">This action cannot be undone. The file will be permanently deleted.</p>
+                </div>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Yes, Delete
+                        </button>
+                        <a href="{% url 'documents:document_detail' document.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

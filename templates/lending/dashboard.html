@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Lending Dashboard - Home Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lending-card {
+        transition: all 0.2s ease;
+    }
+    .lending-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .filter-tabs .nav-link {
+        cursor: pointer;
+    }
+    .filter-tabs .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-arrow-left-right"></i> Lending Dashboard</h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4 d-none d-md-flex">
+    <div class="col-md-4">
+        <div class="card lending-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-box-arrow-in-down text-primary fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Items I Borrowed</h6>
+                        <div class="stat-number text-primary">{{ total_borrowed }}</div>
+                        <small class="text-muted">Currently borrowed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card lending-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-box-arrow-up text-info fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Items I Lent</h6>
+                        <div class="stat-number text-info">{{ total_lent }}</div>
+                        <small class="text-muted">Currently lent out</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card lending-card {% if total_overdue > 0 %}border-danger{% else %}border-success{% endif %}">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-exclamation-triangle {% if total_overdue > 0 %}text-danger{% else %}text-success{% endif %} fs-1"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Overdue Items</h6>
+                        <div class="stat-number {% if total_overdue > 0 %}text-danger{% else %}text-success{% endif %}">{{ total_overdue }}</div>
+                        <small class="text-muted">Need attention</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Stats Bar -->
+<div class="row mb-3 d-md-none">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body py-2">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ total_borrowed }}</div>
+                        <small class="text-muted">Borrowed</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-info">{{ total_lent }}</div>
+                        <small class="text-muted">Lent</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold {% if total_overdue > 0 %}text-danger{% else %}text-success{% endif %}">{{ total_overdue }}</div>
+                        <small class="text-muted">Overdue</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" name="search" id="search" class="form-control" placeholder="Search by item or borrower..." value="{{ search_query }}" list="frequent-borrowers-list">
+                        <datalist id="frequent-borrowers-list">
+                            {% for borrower in frequent_borrowers %}
+                                <option value="{{ borrower.borrower_name }}">
+                                    {{ borrower.borrower_name }} ({{ borrower.count }} borrows)
+                                </option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="view" class="form-label">View</label>
+                        <select name="view" id="view" class="form-select">
+                            <option value="all" {% if view_filter == 'all' %}selected{% endif %}>All</option>
+                            <option value="borrowed" {% if view_filter == 'borrowed' %}selected{% endif %}>Borrowed by Me</option>
+                            <option value="lent" {% if view_filter == 'lent' %}selected{% endif %}>Lent by Me</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                            <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <a href="{% url 'lending:dashboard' %}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-x-circle"></i> Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lending Records Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul"></i> Lending Records ({{ lendings|length }})
+                    </h5>
+                </div>
+                {% if lendings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Borrower</th>
+                                    <th>Location</th>
+                                    <th>Borrowed</th>
+                                    <th>Due</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lending in lendings %}
+                                <tr class="{% if lending.is_overdue %}table-danger{% endif %} {% if lending.returned_date %}table-light{% endif %}">
+                                    <td>
+                                        <a href="{% url 'items:item_detail' lending.item.pk %}" class="text-decoration-none fw-bold">
+                                            {{ lending.item.name }}
+                                        </a>
+                                        {% if lending.quantity > 1 %}
+                                        <span class="badge bg-secondary ms-1">x{{ lending.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if lending.borrowed_by_user == request.user %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {{ lending.borrower_display }}
+                                        </span>
+                                        {% if lending.quantity > 1 %}
+                                        <span class="badge bg-info ms-1">x{{ lending.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lending.item.location %}
+                                            <a href="{% url 'locations:location_detail' lending.item.location.pk %}" class="text-decoration-none text-muted">
+                                                {{ lending.item.location.name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted">{{ lending.borrowed_date|date:"M j, Y" }}</td>
+                                    <td>{{ lending.due_date|date:"M j, Y" }}</td>
+                                    <td>
+                                        {% if lending.returned_date %}
+                                            <span class="badge bg-success">Returned</span>
+                                        {% elif lending.is_overdue %}
+                                            <span class="badge bg-danger">OVERDUE ({{ lending.days_overdue }}d)</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ lending.days_remaining }}d left</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'lending:detail' lending.pk %}" class="btn btn-outline-primary" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if not lending.returned_date %}
+                                                <a href="{% url 'lending:return' lending.pk %}" class="btn btn-outline-success" title="Mark as Returned">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-arrow-left-right' title='No Lending Records' description='No lending records match your current filters. Try adjusting your search criteria or check back later.' action_url='lending:dashboard' action_text='Clear Filters' action_icon='bi-arrow-counterclockwise' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Home Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (max-width: 768px) {
+        .dashboard-title {
+            font-size: 1.75rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="dashboard-title">Dashboard</h1>
+        <p class="lead">Welcome back, {{ user.username }}!</p>
+    </div>
+</div>
+
+<!-- Statistics Cards - Desktop -->
+<div class="row mb-4 d-none d-md-flex">
+    <div class="col-md-3">
+        <div class="stat-card bg-gradient-primary">
+            <h3>{{ total_items }}</h3>
+            <p><i class="bi bi-box"></i> Total Items</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-gradient-success">
+            <h3>${{ total_value|floatformat:0 }}</h3>
+            <p><i class="bi bi-currency-dollar"></i> Total Value</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-gradient-info">
+            <h3>{{ borrowed_count }}</h3>
+            <p><i class="bi bi-arrow-left-right"></i> Borrowed Items</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-gradient-warning">
+            <h3>{{ locations_count }}</h3>
+            <p><i class="bi bi-geo-alt"></i> Locations</p>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Stats Bar -->
+<div class="row mb-3 d-md-none">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body py-2">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="fw-bold text-primary">{{ total_items }}</div>
+                        <small class="text-muted">Items</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="fw-bold text-success">${{ total_value|floatformat:0 }}</div>
+                        <small class="text-muted">Value</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="fw-bold text-info">{{ borrowed_count }}</div>
+                        <small class="text-muted">Borrowed</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="fw-bold text-warning">{{ locations_count }}</div>
+                        <small class="text-muted">Locations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if is_editor %}
+                    <a href="{% url 'items:item_create' %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Item
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'locations:scan_page' %}?camera=true" class="btn btn-info">
+                        <i class="bi bi-camera"></i> Camera Scan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-clock-history"></i> Recent Items</h5>
+                {% if recent_items %}
+                    <div class="list-group">
+                        {% for item in recent_items %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'items:item_detail' item.pk %}" class="text-decoration-none">
+                                        <strong>{{ item.name }}</strong>
+                                    </a>
+                                    {% if item.location %}<br><small class="text-muted">{{ item.location.name }}</small>{% endif %}
+                                    {% if item.current_value %}<br><small class="text-muted">Value: ${{ item.current_value|floatformat:0 }}</small>{% endif %}
+                                </div>
+                                <a href="{% url 'items:item_detail' item.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-clock-history' title='No Recent Items' description='You haven\'t added any items yet. Start by adding your first item to your inventory.' action_url='items:item_create' action_text='Add Your First Item' action_icon='bi-plus-circle' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> Lending Status</h5>
+                {% if overdue_items %}
+                    <h6 class="text-danger mt-3">⚠️ Overdue Items ({{ overdue_items|length }})</h6>
+                    {% for lending in overdue_items %}
+                        <div class="alert alert-danger d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'items:item_detail' lending.item.pk %}" class="text-decoration-none text-danger">
+                                    <strong>{{ lending.item.name }}</strong>
+                                </a><br>
+                                <small>Borrowed by: {{ lending.borrower_display }}</small><br>
+                                <small>Overdue by {{ lending.days_overdue }} days</small>
+                            </div>
+                            <a href="{% url 'lending:return' lending.pk %}" class="btn btn-sm btn-danger">Return</a>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if borrowed_items %}
+                    <h6 class="mt-3">Currently Borrowed ({{ borrowed_items|length }})</h6>
+                    {% for lending in borrowed_items %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'items:item_detail' lending.item.pk %}" class="text-decoration-none">
+                                    <strong>{{ lending.item.name }}</strong>
+                                </a><br>
+                                <small>Borrowed by: {{ lending.borrower_display }}</small><br>
+                                <small>Due: {{ lending.due_date|date:"M j, Y" }} ({{ lending.days_remaining }}d)</small>
+                            </div>
+                            <a href="{% url 'lending:return' lending.pk %}" class="btn btn-sm btn-warning">Return</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-arrow-left-right' title='No Items Borrowed' description='No items are currently borrowed. When you lend items to others, they will appear here.' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-box-seam"></i> Low Stock Alerts</h5>
+                {% if low_stock_items %}
+                    <h6 class="text-warning mt-3">⚠️ Items Below Minimum Threshold ({{ low_stock_items|length }})</h6>
+                    {% for item in low_stock_items %}
+                        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'items:item_detail' item.pk %}" class="text-decoration-none">
+                                    <strong>{{ item.name }}</strong>
+                                </a><br>
+                                <small>Current: {{ item.quantity }} | Minimum: {{ item.min_quantity }}</small><br>
+                                <small>{{ item.min_quantity|add:"-" }} needed to reach threshold</small>
+                            </div>
+                            <a href="{% url 'items:item_update' item.pk %}" class="btn btn-sm btn-warning">Update</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-check-circle' title='All Stock Levels Good' description='All items are above their minimum quantity thresholds. Great job keeping your inventory stocked!' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-shield-check"></i> Warranty Expiring Soon</h5>
+                {% if expiring_warranties %}
+                    <div class="row">
+                        {% for warranty in expiring_warranties %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ warranty.item.name }}</h6>
+                                        <p class="card-text">
+                                            <small>{{ warranty.provider }}</small><br>
+                                            <small>Expires in {{ warranty.days_remaining }} days</small>
+                                        </p>
+                                        <a href="{% url 'warranties:warranty_detail' warranty.pk %}" class="btn btn-sm btn-primary">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'components/empty_state.html' with icon='bi-shield-check' title='No Warranties Expiring' description='No warranties are expiring in the next 30 days. Your items are well protected!' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

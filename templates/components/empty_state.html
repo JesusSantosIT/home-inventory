@@ -1,0 +1,19 @@
+{% comment %}
+Reusable empty state component
+Usage: {% include 'components/empty_state.html' with icon='bi-box' title='No Items' description='You haven\'t added any items yet.' action_url='items:item_create' action_text='Add Your First Item' %}
+{% endcomment %}
+
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi {{ icon|default:'bi-inbox' }}"></i>
+    </div>
+    <h3 class="empty-state-title">{{ title|default:'No Data' }}</h3>
+    <p class="empty-state-description">{{ description|default:'There is no data to display.' }}</p>
+    {% if action_url %}
+    <div class="empty-state-actions">
+        <a href="{{ action_url }}" class="btn btn-primary">
+            <i class="bi {{ action_icon|default:'bi-plus-circle' }}"></i> {{ action_text|default:'Get Started' }}
+        </a>
+    </div>
+    {% endif %}
+</div>

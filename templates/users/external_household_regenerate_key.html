@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Regenerate API Key - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'users:external_households' %}">External Households</a></li>
+                <li class="breadcrumb-item active">Regenerate API Key</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-arrow-repeat"></i> Regenerate API Key</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Are you sure you want to regenerate the API key for <strong>{{ household.name }}</strong>?
+                    <br><br>
+                    <strong>Important:</strong> This will invalidate the current API key. The external household will need to update their configuration with the new key.
+                </div>
+                
+                <div class="mb-3">
+                    <p><strong>Household:</strong> {{ household.name }}</p>
+                    <p><strong>Base URL:</strong> <code>{{ household.base_url }}</code></p>
+                </div>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-repeat"></i> Yes, Regenerate Key
+                    </button>
+                    <a href="{% url 'users:external_households' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

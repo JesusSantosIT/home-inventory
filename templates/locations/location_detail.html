@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ location.name }} - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+        <h1><i class="bi bi-geo-alt"></i> {{ location.name }}
+            <span class="badge bg-info">{{ location.get_location_type_display }}</span>
+        </h1>
+        <p class="text-muted">{{ location.get_full_path }}</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Actions</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if is_editor %}
+                    <a href="{% url 'locations:location_update' location.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Location
+                    </a>
+                    <a href="{% url 'locations:location_create_child' location.pk %}" class="btn btn-success">
+                        <i class="bi bi-plus"></i> Add Sub-location
+                    </a>
+                    <a href="{% url 'items:item_create_for_location' location.pk %}" class="btn btn-info">
+                        <i class="bi bi-plus-circle"></i> Add Item Here
+                    </a>
+                    <a href="{% url 'locations:location_delete' location.pk %}" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Location
+                    </a>
+                    {% endif %}
+                    {% if location.has_barcode %}
+                    <a href="{% url 'locations:generate_barcode' location.pk %}" class="btn btn-outline-info">
+                        <i class="bi bi-upc-scan"></i> Download Barcode
+                    </a>
+                    <a href="{% url 'locations:generate_qr_code' location.pk %}" class="btn btn-outline-dark">
+                        <i class="bi bi-qr-code"></i> Download QR Code
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle"></i> Location Details</h5>
+                {% if images %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="card-title"><i class="bi bi-images"></i> Location Images</h6>
+                        <div class="row">
+                            {% for image in images %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    {% if image.thumbnail %}
+                                        <img src="{{ image.thumbnail.url }}" alt="{{ image.caption|default:location.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy">
+                                    {% else %}
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:location.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy">
+                                    {% endif %}
+                                    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                        {% if image.caption %}
+                                        <small class="text-muted">{{ image.caption }}</small>
+                                        {% else %}
+                                        <small class="text-muted">No caption</small>
+                                        {% endif %}
+                                        <a href="{% url 'locations:delete_image' location.pk image.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if location.description %}
+                    <p class="card-text">{{ location.description }}</p>
+                {% endif %}
+                
+                {% if location.has_barcode %}
+                <div class="alert alert-info">
+                    <p><strong>Barcode:</strong> {{ location.barcode }}</p>
+                    <p><strong>QR Code:</strong> {{ location.qr_code }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Items in this location ({{ total_items }} total)</h6>
+                        <div class="d-flex gap-2">
+                            <form method="get" class="d-flex gap-2">
+                                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search items..." value="{{ search_query }}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                {% if search_query %}
+                                <a href="{% url 'locations:location_detail' location.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                                {% endif %}
+                            </form>
+                            <a href="{% url 'items:item_create_for_location' location.pk %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-plus-circle"></i> Add Item
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {% if direct_items %}
+                        <h6 class="mt-3">Directly in {{ location.name }} ({{ direct_count }})</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Name</th>
+                                        <th>Quantity</th>
+                                        <th>Value</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in direct_items %}
+                                    <tr {% if item.has_active_lending %}table-warning{% endif %}>
+                                        <td>
+                                            {% if item.images.first %}
+                                                {% with item.images.first as first_image %}
+                                                    <a href="{% url 'items:item_detail' item.pk %}">
+                                                        {% if first_image.thumbnail %}
+                                                            <img src="{{ first_image.thumbnail.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                                                        {% else %}
+                                                            <img src="{{ first_image.image.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                                                        {% endif %}
+                                                    </a>
+                                                {% endwith %}
+                                            {% else %}
+                                                <div class="bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 4px;">
+                                                    <i class="bi bi-image text-muted"></i>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'items:item_detail' item.pk %}" class="text-decoration-none fw-bold">
+                                                {{ item.name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{% if item.current_value %}${{ item.current_value|floatformat:0 }}{% else %}-{% endif %}</td>
+                                        <td>
+                                            {% if item.has_active_lending %}
+                                                <span class="badge bg-warning">Borrowed</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Available</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'items:item_detail' item.pk %}" class="btn btn-outline-primary" title="View">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="{% url 'items:item_update' item.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if direct_items.has_other_pages %}
+                        <nav aria-label="Direct items pagination" class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center">
+                                {% if direct_items.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ direct_items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">First</span></li>
+                                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                                {% endif %}
+                                
+                                <li class="page-item active"><span class="page-link">{{ direct_items.number }} of {{ direct_items.paginator.num_pages }}</span></li>
+                                
+                                {% if direct_items.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ direct_items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ direct_items.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                    <li class="page-item disabled"><span class="page-link">Last</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        <p class="text-center text-muted small">Showing {{ direct_items.start_index }} to {{ direct_items.end_index }} of {{ direct_items.paginator.count }} items</p>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if sublocation_items_by_location %}
+                        <h6 class="mt-4">In Sub-locations ({{ sublocation_count }})</h6>
+                        {% for group in sublocation_items_by_location %}
+                            {% with subloc=group.location items=group.items %}
+                            <div class="mt-3">
+                                <a href="{% url 'locations:location_detail' subloc.pk %}" class="text-decoration-none">
+                                    <h6 class="text-primary">
+                                        <i class="bi bi-chevron-right"></i> {{ subloc.name }} ({{ group.total }})
+                                    </h6>
+                                </a>
+                                {% if group.total > group.items|length %}
+                                <p class="text-muted small mb-1">Showing first {{ group.items|length }} of {{ group.total }} items</p>
+                                {% endif %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Name</th>
+                                                <th>Quantity</th>
+                                                <th>Value</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in items %}
+                                            <tr {% if item.has_active_lending %}table-warning{% endif %}>
+                                                <td>
+                                                    {% if item.images.first %}
+                                                        {% with item.images.first as first_image %}
+                                                            <a href="{% url 'items:item_detail' item.pk %}">
+                                                                {% if first_image.thumbnail %}
+                                                                    <img src="{{ first_image.thumbnail.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                                                                {% else %}
+                                                                    <img src="{{ first_image.image.url }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                                                                {% endif %}
+                                                            </a>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        <div class="bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 4px;">
+                                                            <i class="bi bi-image text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'items:item_detail' item.pk %}" class="text-decoration-none fw-bold">
+                                                        {{ item.name }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ item.quantity }}</td>
+                                                <td>{% if item.current_value %}${{ item.current_value|floatformat:0 }}{% else %}-{% endif %}</td>
+                                                <td>
+                                                    {% if item.has_active_lending %}
+                                                        <span class="badge bg-warning">Borrowed</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">Available</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{% url 'items:item_detail' item.pk %}" class="btn btn-outline-primary" title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a href="{% url 'items:item_update' item.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% if group.total > group.items|length %}
+                                <div class="text-end mt-1">
+                                    <a href="{% url 'locations:location_detail' subloc.pk %}" class="btn btn-sm btn-outline-primary">
+                                        View all {{ group.total }} items <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endwith %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if not direct_items and not sublocation_items_by_location %}
+                        {% include 'components/empty_state.html' with icon='bi-box-seam' title='No Items in This Location' description='This location and its sub-locations are empty. Add your first item to get started.' action_url=item_create_url action_text='Add Your First Item' action_icon='bi-plus-circle' %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

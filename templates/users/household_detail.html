@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ household.name }} - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+        <h1><i class="bi bi-people"></i> {{ household.name }}</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle"></i> Household Details</h5>
+                {% if household.description %}
+                    <p class="card-text">{{ household.description }}</p>
+                {% endif %}
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> Created {{ household.created_at|date:"F j, Y" }}
+                    </small>
+                </p>
+                
+                <h6 class="mt-4">Members ({{ household.members.count }})</h6>
+                <div class="list-group">
+                    {% for member in household.householdmember_set.all %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ member.user.username }}</strong>
+                            <span class="badge bg-{% if member.role == 'admin' %}danger{% elif member.role == 'member' %}primary{% else %}secondary{% endif %} ms-2">
+                                {{ member.get_role_display }}
+                            </span>
+                        </div>
+                        <small class="text-muted">Joined {{ member.joined_at|date:"F j, Y" }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Actions</h5>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'users:household_invite' household.pk %}" class="btn btn-primary">
+                        <i class="bi bi-person-plus"></i> Invite Member
+                    </a>
+                    <a href="{% url 'users:household_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Households
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

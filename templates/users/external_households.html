@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}External Households - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">External Households</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-link-45deg"></i> Manage External Households</h1>
+                <p class="text-muted mb-0"><a href="{% url 'users:external_households' %}">← Back to households</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title mb-0"><i class="bi bi-key"></i> Instance API Key</h5>
+                    <form method="post" action="{% url 'users:instance_api_key_regenerate' %}" class="d-inline"
+                          onsubmit="return confirm('Generate a new instance API key? The old key will stop working immediately.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if instance_household %}btn-outline-warning{% else %}btn-primary{% endif %}">
+                            <i class="bi bi-arrow-repeat"></i> {% if instance_household %}Regenerate{% else %}Generate{% endif %} Key
+                        </button>
+                    </form>
+                </div>
+                <p class="text-muted small mb-2">
+                    Share this single key with any external household — they use it to view your items available for lending.
+                    Unlike per-household keys below, this one is not tied to a specific household.
+                </p>
+                {% if instance_household %}
+                <div class="d-flex align-items-center">
+                    <code class="text-primary fs-6">{{ instance_household.api_key_for_them }}</code>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ instance_household.api_key_for_them }}')">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+                <small class="text-muted">
+                    {% if instance_household.last_accessed %}Last used: {{ instance_household.last_accessed|date:"M d, Y H:i" }} · {% endif %}
+                    {{ instance_household.access_count }} total accesses
+                </small>
+                {% else %}
+                <p class="text-muted mb-0"><em>No instance key generated yet. Click "Generate Key" to create one.</em></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title"><i class="bi bi-globe"></i> Connected Households</h5>
+                    <a href="{% url 'users:external_household_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add External Household
+                    </a>
+                </div>
+                
+                {% if households %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Base URL</th>
+                                <th>API Key (For Them)</th>
+                                <th>IP Restrictions</th>
+                                <th>Usage</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for household in households %}
+                            <tr>
+                                <td>
+                                    <strong><a href="{% url 'users:external_household_items' household.pk %}" class="text-decoration-none">{{ household.name }}</a></strong>
+                                    {% if not household.active %}<span class="badge bg-secondary ms-1">Disabled</span>{% endif %}
+                                    {% if household.api_key_expires %}
+                                        <br><small class="text-muted">Expires: {{ household.api_key_expires|date:"M d, Y H:i" }}</small>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ household.base_url }}</code></td>
+                                <td>
+                                    <code class="text-primary">{{ household.api_key_for_them }}</code>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ household.api_key_for_them }}')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    {% if household.allowed_ips %}
+                                        <small class="text-muted">IPs: {{ household.allowed_ips }}</small>
+                                    {% else %}
+                                        <small class="text-muted">All IPs allowed</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ household.access_count }} accesses</small>
+                                    {% if household.last_accessed %}
+                                        <br><small class="text-muted">Last: {{ household.last_accessed|date:"M d, H:i" }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if household.active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'users:external_household_items' household.pk %}" class="btn btn-outline-primary" title="View their available items">
+                                            <i class="bi bi-box-seam"></i> Items
+                                        </a>
+                                        <a href="{% url 'users:external_household_update' household.pk %}" class="btn btn-outline-secondary" title="Edit connection">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'users:external_household_regenerate_key' household.pk %}" class="btn btn-outline-warning" title="Regenerate API Key">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </a>
+                                        <a href="{% url 'users:external_household_delete' household.pk %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                {% include 'components/empty_state.html' with icon='bi-link-45deg' title='No External Households' description='You haven\'t connected to any external households yet. Connect with other households to share items for lending.' action_url='users:external_household_create' action_text='Add Your First External Household' action_icon='bi-plus-circle' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle"></i> How to Connect</h5>
+                <p class="text-muted">Each household runs its own instance. Connecting is a two-way key exchange:</p>
+                <ol>
+                    <li><strong>They share their key with you:</strong> on their instance they generate an Instance API Key (card above on their External Households page) and send it to you</li>
+                    <li><strong>You add them:</strong> click "Add External Household", enter their name, base URL, and paste <em>their</em> instance API key in "Their Instance API Key"</li>
+                    <li><strong>You share your key with them:</strong> send them your Instance API Key (or a per-household key) so they can add you the same way</li>
+                    <li>Now you can click the <i class="bi bi-box-seam"></i> button on their row to see their items available for lending — and they can see yours</li>
+                </ol>
+                <p class="text-muted">Without a valid API key, a household sees nothing — the key is the only thing that grants access to the lending API.</p>
+                <p class="text-muted">API Endpoints:</p>
+                <ul>
+                    <li><code>GET /users/api/v1/available-items/</code> - Browse available items</li>
+                    <li><code>POST /users/api/v1/request-lending/</code> - Request to borrow items</li>
+                    <li><code>GET /users/api/v1/items/&lt;id&gt;/</code> - Get item details</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('API key copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

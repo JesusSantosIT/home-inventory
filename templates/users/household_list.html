@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Households - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-people"></i> My Households</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title"><i class="bi bi-list"></i> Household List</h5>
+                    <a href="{% url 'users:household_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create New Household
+                    </a>
+                </div>
+                
+                {% if households %}
+                    <div class="row mt-4">
+                        {% for household in households %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-house"></i> {{ household.name }}
+                                        </h5>
+                                        {% if household.description %}
+                                            <p class="card-text text-muted">{{ household.description }}</p>
+                                        {% endif %}
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                <i class="bi bi-people"></i> {{ household.members.count }} members
+                                            </small><br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar"></i> Created {{ household.created_at|date:"F j, Y" }}
+                                            </small>
+                                        </p>
+                                        <a href="{% url 'users:household_detail' household.pk %}" class="btn btn-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people display-4 text-muted"></i>
+                        <p class="text-muted mt-3">You are not a member of any households.</p>
+                        <a href="{% url 'users:household_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create your first household
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

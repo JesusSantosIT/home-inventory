@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Label Template - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'items:item_list' %}">Items</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'items:label_template_list' %}">Label Templates</a></li>
+                <li class="breadcrumb-item active">{{ action }} Template</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-printer"></i> {{ action }} Label Template</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Template Name</label>
+                        <input type="text" name="name" id="name" class="form-control" value="{% if template %}{{ template.name }}{% endif %}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="label_size" class="form-label">Label Size</label>
+                        <select name="label_size" id="label_size" class="form-select" onchange="updateSize()">
+                            <option value="50x25" {% if template and template.label_size == '50x25' %}selected{% endif %}>50mm x 25mm (Small)</option>
+                            <option value="50x30" {% if not template or template.label_size == '50x30' %}selected{% endif %}>50mm x 30mm (Medium)</option>
+                            <option value="60x30" {% if template and template.label_size == '60x30' %}selected{% endif %}>60mm x 30mm (Large)</option>
+                            <option value="100x50" {% if template and template.label_size == '100x50' %}selected{% endif %}>100mm x 50mm (Extra Large)</option>
+                            <option value="custom" {% if template and template.label_size == 'custom' %}selected{% endif %}>Custom Size</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="width_mm" class="form-label">Width (mm)</label>
+                            <input type="number" name="width_mm" id="width_mm" class="form-control" value="{% if template %}{{ template.width_mm }}{% else %}50{% endif %}" min="10">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="height_mm" class="form-label">Height (mm)</label>
+                            <input type="number" name="height_mm" id="height_mm" class="form-control" value="{% if template %}{{ template.height_mm }}{% else %}30{% endif %}" min="10">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="font_size" class="form-label">Font Size (points)</label>
+                        <input type="number" name="font_size" id="font_size" class="form-control" value="{% if template %}{{ template.font_size }}{% else %}12{% endif %}" min="6" max="24">
+                    </div>
+                    
+                    <hr>
+                    <h6>Label Content</h6>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="include_name" id="include_name" class="form-check-input" {% if not template or template.include_name %}checked{% endif %}>
+                            <label for="include_name" class="form-check-label">Include Item Name</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="include_barcode" id="include_barcode" class="form-check-input" {% if not template or template.include_barcode %}checked{% endif %}>
+                            <label for="include_barcode" class="form-check-label">Include Barcode</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="include_qr_code" id="include_qr_code" class="form-check-input" {% if template and template.include_qr_code %}checked{% endif %}>
+                            <label for="include_qr_code" class="form-check-label">Include QR Code</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="include_location" id="include_location" class="form-check-input" {% if not template or template.include_location %}checked{% endif %}>
+                            <label for="include_location" class="form-check-label">Include Location</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="include_description" id="include_description" class="form-check-input" {% if template and template.include_description %}checked{% endif %}>
+                            <label for="include_description" class="form-check-label">Include Description</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ action }}
+                        </button>
+                        <a href="{% url 'items:label_template_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateSize() {
+    const size = document.getElementById('label_size').value;
+    const widthInput = document.getElementById('width_mm');
+    const heightInput = document.getElementById('height_mm');
+    
+    if (size === '50x25') {
+        widthInput.value = 50;
+        heightInput.value = 25;
+    } else if (size === '50x30') {
+        widthInput.value = 50;
+        heightInput.value = 30;
+    } else if (size === '60x30') {
+        widthInput.value = 60;
+        heightInput.value = 30;
+    } else if (size === '100x50') {
+        widthInput.value = 100;
+        heightInput.value = 50;
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if household %}Edit{% else %}Add{% endif %} External Household - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'users:external_households' %}">External Households</a></li>
+                <li class="breadcrumb-item active">{% if household %}Edit {{ household.name }}{% else %}Add External Household{% endif %}</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-{% if household %}pencil{% else %}plus-circle{% endif %}"></i> {% if household %}Edit {{ household.name }}{% else %}Add External Household{% endif %}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Household Name</label>
+                        <input type="text" name="name" id="name" class="form-control" required
+                               value="{{ household.name|default:'' }}" placeholder="e.g., Smith Family">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="base_url" class="form-label">Base URL</label>
+                        <input type="url" name="base_url" id="base_url" class="form-control" required
+                               value="{{ household.base_url|default:'' }}" placeholder="e.g., http://192.168.1.100:8000">
+                        <small class="form-text text-muted">The base URL of the external instance (include port if needed)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="remote_api_key" class="form-label">Their Instance API Key</label>
+                        <input type="text" name="remote_api_key" id="remote_api_key" class="form-control"
+                               value="{{ household.remote_api_key|default:'' }}" placeholder="API key generated on THEIR instance" autocomplete="off">
+                        <small class="form-text text-muted">
+                            The instance API key the other household generated for you (External → Instance API Key on their side).
+                            We use it to call THEIR API and show their available items.
+                            {% if household %}Leave empty to keep the existing key.{% endif %}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="allowed_ips" class="form-label">Allowed IP Addresses (Optional)</label>
+                        <input type="text" name="allowed_ips" id="allowed_ips" class="form-control"
+                               value="{{ household.allowed_ips|default:'' }}" placeholder="e.g., 192.168.1.100, 10.0.0.1">
+                        <small class="form-text text-muted">Comma-separated list of IP addresses allowed to call YOUR api for this household. Leave empty to allow all IPs.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="api_key_expires" class="form-label">Your Key Expiration for Them (Optional)</label>
+                        <input type="datetime-local" name="api_key_expires" id="api_key_expires" class="form-control"
+                               value="{{ expires_value|default:'' }}">
+                        <small class="form-text text-muted">When the API key you gave them should expire. Leave empty for no expiration.</small>
+                    </div>
+
+                    {% if household %}
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="active" id="active" class="form-check-input" {% if household.active %}checked{% endif %}>
+                        <label for="active" class="form-check-label">Active (uncheck to disable this connection)</label>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {% if household %}Save Changes{% else %}Create Connection{% endif %}
+                        </button>
+                        <a href="{% url 'users:external_households' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

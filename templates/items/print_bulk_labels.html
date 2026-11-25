@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Print Bulk Labels - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'items:item_list' %}">Items</a></li>
+                <li class="breadcrumb-item active">Print Bulk Labels</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-printer"></i> Print Bulk Labels</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5>Select Items</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">Select All</button>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="location-filter" class="form-label">Filter by Location</label>
+                                <select id="location-filter" class="form-select" onchange="filterByLocation()">
+                                    <option value="">All Locations</option>
+                                    {% for location in locations %}
+                                        <option value="{{ location.pk }}" {% if location_filter|stringformat:"s" == location.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ location.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="50"><input type="checkbox" id="select-all" onchange="toggleAll()"></th>
+                                        <th>Name</th>
+                                        <th>Location</th>
+                                        <th>Barcode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td><input type="checkbox" name="item_ids" value="{{ item.pk }}" class="item-checkbox"></td>
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.location.name|default:'N/A' }}</td>
+                                        <td>{{ item.barcode|default:'N/A' }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">No items found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if items.has_other_pages %}
+                        <nav aria-label="Page navigation" class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if items.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ items.previous_page_number }}{% if location_filter %}&location={{ location_filter }}{% endif %}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                                {% endif %}
+                                <li class="page-item disabled"><span class="page-link">Page {{ items.number }} of {{ items.paginator.num_pages }}</span></li>
+                                {% if items.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ items.next_page_number }}{% if location_filter %}&location={{ location_filter }}{% endif %}">Next</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                        <small class="text-muted d-block mt-2">Note: "Select All" applies to items on the current page only.</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-printer"></i> Print Labels
+                        </button>
+                        <a href="{% url 'items:item_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectAll() {
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('select-all').checked = true;
+}
+
+function toggleAll() {
+    const selectAll = document.getElementById('select-all');
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+function filterByLocation() {
+    const locationId = document.getElementById('location-filter').value;
+    window.location.href = `?location=${locationId}`;
+}
+</script>
+{% endblock %}

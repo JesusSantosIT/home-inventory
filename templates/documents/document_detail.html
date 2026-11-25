@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Details - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+        <h1><i class="bi bi-file-earmark"></i> Document Details</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-earmark"></i> {{ document.title }}</h5>
+                
+                <table class="table">
+                    <tr>
+                        <th>Type</th>
+                        <td>
+                            <span class="badge bg-{% if document.document_type == 'receipt' %}success{% elif document.document_type == 'warranty' %}primary{% elif document.document_type == 'manual' %}info{% else %}secondary{% endif %}">
+                                {{ document.get_document_type_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Item</th>
+                        <td><a href="{% url 'items:item_detail' document.item.pk %}">{{ document.item.name }}</a></td>
+                    </tr>
+                    <tr>
+                        <th>File</th>
+                        <td>{{ document.file.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Uploaded</th>
+                        <td>{{ document.uploaded_at|date:"F j, Y, g:i A" }}</td>
+                    </tr>
+                    {% if document.uploaded_by %}
+                    <tr>
+                        <th>Uploaded By</th>
+                        <td>{{ document.uploaded_by.username }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if document.notes %}
+                    <tr>
+                        <th>Notes</th>
+                        <td>{{ document.notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Actions</h5>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'documents:document_download' document.pk %}" class="btn btn-success">
+                        <i class="bi bi-download"></i> Download File
+                    </a>
+                    <a href="{% url 'documents:document_update' document.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Document
+                    </a>
+                    <a href="{% url 'documents:document_delete' document.pk %}" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Document
+                    </a>
+                    <a href="{% url 'items:item_detail' document.item.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-box"></i> Back to Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

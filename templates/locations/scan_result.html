@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan Result - Home Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'locations:scan_page' %}">Scan</a></li>
+                <li class="breadcrumb-item active">Result</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-upc-scan"></i> Scan Result</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if type == 'location' %}
+        <div class="card border-success">
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h5 class="alert-heading"><i class="bi bi-check-circle"></i> Location Found!</h5>
+                    <p class="mb-0">Barcode/QR Code: <strong>{{ code }}</strong></p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4><i class="bi bi-geo-alt"></i> {{ location.name }}</h4>
+                        <p class="text-muted">{{ location.get_full_path }}</p>
+                        
+                        <table class="table">
+                            <tr>
+                                <th>Type</th>
+                                <td>{{ location.get_location_type_display }}</td>
+                            </tr>
+                            {% if location.description %}
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ location.description }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Barcode</th>
+                                <td>{{ location.barcode }}</td>
+                            </tr>
+                            <tr>
+                                <th>QR Code</th>
+                                <td>{{ location.qr_code }}</td>
+                            </tr>
+                            <tr>
+                                <th>Items</th>
+                                <td>{{ location.get_item_count }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Actions</h5>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'locations:location_detail' location.pk %}" class="btn btn-primary">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                    <a href="{% url 'locations:location_create_child' location.pk %}" class="btn btn-success">
+                                        <i class="bi bi-plus"></i> Add Sub-location
+                                    </a>
+                                    <a href="{% url 'items:item_create_for_location' location.pk %}" class="btn btn-info">
+                                        <i class="bi bi-plus-circle"></i> Add Item
+                                    </a>
+                                    <a href="{% url 'locations:scan_page' %}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-repeat"></i> Scan Another
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% elif type == 'item' %}
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="alert alert-primary">
+                    <h5 class="alert-heading"><i class="bi bi-check-circle"></i> Item Found!</h5>
+                    <p class="mb-0">Barcode/QR Code: <strong>{{ code }}</strong></p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4><i class="bi bi-box"></i> {{ item.name }}</h4>
+                        {% if item.location %}
+                        <p class="text-muted">Location: {{ item.location.get_full_path }}</p>
+                        {% endif %}
+                        
+                        <table class="table">
+                            <tr>
+                                <th>Serial Number</th>
+                                <td>{{ item.serial_number|default:'N/A' }}</td>
+                            </tr>
+                            {% if item.brand %}
+                            <tr>
+                                <th>Brand</th>
+                                <td>{{ item.brand }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if item.model %}
+                            <tr>
+                                <th>Model</th>
+                                <td>{{ item.model }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Barcode</th>
+                                <td>{{ item.barcode }}</td>
+                            </tr>
+                            <tr>
+                                <th>QR Code</th>
+                                <td>{{ item.qr_code }}</td>
+                            </tr>
+                            {% if item.current_value %}
+                            <tr>
+                                <th>Value</th>
+                                <td>${{ item.current_value|floatformat:2 }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Condition</th>
+                                <td>{{ item.get_condition_display }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Actions</h5>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'items:item_detail' item.pk %}" class="btn btn-primary">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                    <a href="{% url 'items:item_update' item.pk %}" class="btn btn-secondary">
+                                        <i class="bi bi-pencil"></i> Edit Item
+                                    </a>
+                                    {% if item.location %}
+                                    <a href="{% url 'locations:location_detail' item.location.pk %}" class="btn btn-info">
+                                        <i class="bi bi-geo-alt"></i> View Location
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'locations:scan_page' %}" class="btn btn-outline-dark">
+                                        <i class="bi bi-arrow-repeat"></i> Scan Another
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% elif type == 'not_found' %}
+        <div class="card border-danger">
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Not Found</h5>
+                    <p class="mb-0">No location or item found with barcode/QR code: <strong>{{ code }}</strong></p>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-muted">Please check the code and try again.</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'locations:scan_page' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-repeat"></i> Scan Again
+                        </a>
+                        <a href="{% url 'locations:location_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-list"></i> View All Locations
+                        </a>
+                        <a href="{% url 'items:item_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-box"></i> View All Items
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
