@@ -4,7 +4,18 @@ name: Build and Push Docker Image
   push:
     tags:
       - 'v*'
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (e.g. 1.0.0)'
+        required: true
+        default: 'latest'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/home-inventory
 
 jobs:
   test:
