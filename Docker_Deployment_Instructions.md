@@ -84,7 +84,10 @@ curl -I http://localhost:8000/    # expect 302 -> /login/
 
 ---
 
-## 3. Create your admin user
+## 3. Create your admin user (required — no default credentials)
+
+A fresh deployment has **no users and no default login**. Create the first
+account before anything else can log in:
 
 ```bash
 docker compose exec app python manage.py createsuperuser

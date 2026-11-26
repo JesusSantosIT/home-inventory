@@ -78,6 +78,7 @@ A self-hosted Django-based home inventory management system with hierarchical lo
 8. **Access the application**
    - Open http://localhost:8000 in your browser
    - Log in with the superuser account you created
+   - **Note:** there are no default credentials — you must run `createsuperuser` first (step 6)
 
 ### Docker Setup
 
@@ -86,18 +87,19 @@ A self-hosted Django-based home inventory management system with hierarchical lo
    docker-compose up --build
    ```
 
-2. **Run migrations in the container**
+2. **Run migrations in the container** (also runs automatically on start)
    ```bash
-   docker-compose exec web python manage.py migrate
+   docker-compose exec app python manage.py migrate
    ```
 
-3. **Create a superuser**
+3. **Create a superuser** — there are no default credentials; this is required before first login
    ```bash
-   docker-compose exec web python manage.py createsuperuser
+   docker-compose exec app python manage.py createsuperuser
    ```
 
 4. **Access the application**
    - Open http://localhost:8000 in your browser
+   - Log in with the account you just created
 
 ## Configuration
 
@@ -106,29 +108,20 @@ A self-hosted Django-based home inventory management system with hierarchical lo
 Edit the `.env` file to configure the application:
 
 ```env
-# Database
-DB_PASSWORD=your_secure_password_here
-DATABASE_URL=postgres://inventory:your_secure_password_here@db:5432/inventory
+# Security (see .env.example for full documentation)
+SECRET_KEY=generate-with-python-c
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+SITE_URL=https://your-domain.com
+TRUST_PROXY=1
 
-# Django - Development (default)
-SECRET_KEY=your-secret-key-here-generate-with-python
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Django - Production Settings
-# Set these when deploying to production:
-# DEBUG=False
-# SECRET_KEY=<generate-with-python>
-# ALLOWED_HOSTS=your-domain.com,your-domain.com
-# SECURE_SSL_REDIRECT=True
-# SESSION_COOKIE_SECURE=True
-# CSRF_COOKIE_SECURE=True
-# SECURE_HSTS_SECONDS=31536000
-# SECURE_HSTS_INCLUDE_SUBDOMAINS=True
-# SECURE_HSTS_PRELOAD=True
-
-# CSRF Trusted Origins (for development/browser preview)
-CSRF_TRUSTED_ORIGINS=http://127.0.0.1:*,http://localhost:*
+# Database — SQLite by default; uncomment for PostgreSQL
+# DB_ENGINE=postgresql
+# DB_NAME=inventory
+# DB_USER=inventory
+# DB_PASSWORD=your_secure_password_here
+# DB_HOST=localhost
+# DB_PORT=5432
 ```
 
 Generate a secret key with:

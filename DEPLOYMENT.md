@@ -21,7 +21,19 @@ python manage.py migrate
 python manage.py check --deploy
 ```
 
-## 3. Run with Waitress (Windows/Linux, no compile needed)
+## 3. Create your admin user (required — no default credentials)
+
+A fresh deployment has **no users and no default login**. Create the first
+account before anything else can log in:
+
+```bash
+python manage.py createsuperuser
+```
+
+Then grant it the admin role — either via Django admin (`/admin/` →
+User Profiles) or the in-app **Manage Roles** page once logged in.
+
+## 4. Run with Waitress (Windows/Linux, no compile needed)
 
 ```bash
 waitress-serve --host=0.0.0.0 --port=8000 home_inventory.wsgi:application
@@ -34,7 +46,7 @@ python manage.py runserver  # dev only - never use in production
 
 For a Windows service, use NSSM or Task Scheduler to run the waitress command at startup.
 
-## 4. Reverse proxy with TLS (required)
+## 5. Reverse proxy with TLS (required)
 
 The external-household API **rejects non-HTTPS requests** when `DEBUG=False`,
 so you must serve the app over HTTPS. Easiest options:
@@ -49,12 +61,12 @@ so you must serve the app over HTTPS. Easiest options:
 
 With `TRUST_PROXY=1` set, Django correctly detects HTTPS through the proxy.
 
-## 5. Database
+## 6. Database
 
 SQLite (default) is fine for a single household. For heavier use, set
 `DB_ENGINE=postgresql` + `DB_*` vars in `.env` and run migrations.
 
-## 6. Backups
+## 7. Backups
 
 - SQLite: copy `db.sqlite3` + the `media/` folder
 - Postgres: `pg_dump`
