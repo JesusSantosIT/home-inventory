@@ -96,6 +96,9 @@ A self-hosted Django-based home inventory management system with hierarchical lo
    ```bash
    docker-compose exec app python manage.py createsuperuser
    ```
+   Or set `DJANGO_SUPERUSER_USERNAME` / `DJANGO_SUPERUSER_EMAIL` /
+   `DJANGO_SUPERUSER_PASSWORD` in `.env` before first `up` — the container
+   creates the account automatically.
 
 4. **Access the application**
    - Open http://localhost:8000 in your browser

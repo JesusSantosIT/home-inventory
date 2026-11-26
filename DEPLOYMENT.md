@@ -30,6 +30,10 @@ account before anything else can log in:
 python manage.py createsuperuser
 ```
 
+Docker shortcut: set `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`,
+and `DJANGO_SUPERUSER_PASSWORD` in `.env` and the container entrypoint
+creates the superuser automatically on first start (skipped if it exists).
+
 Then grant it the admin role — either via Django admin (`/admin/` →
 User Profiles) or the in-app **Manage Roles** page once logged in.
 

@@ -86,15 +86,30 @@ curl -I http://localhost:8000/    # expect 302 -> /login/
 
 ## 3. Create your admin user (required — no default credentials)
 
-A fresh deployment has **no users and no default login**. Create the first
-account before anything else can log in:
+A fresh deployment has **no users and no default login**. Two options:
+
+### Option A — automatic (recommended for Docker)
+
+Set these in `.env` **before** the first `docker compose up`:
+
+```ini
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@localhost
+DJANGO_SUPERUSER_PASSWORD=<strong-password>
+```
+
+The container entrypoint creates the superuser automatically on start
+(skipped if the user already exists). Change or remove the password from
+`.env` afterwards — it is only needed for first boot.
+
+### Option B — manual
 
 ```bash
 docker compose exec app python manage.py createsuperuser
 ```
 
-Then set your profile role to **admin** (via Django admin at `/admin/` →
-User Profiles, or the in-app "Manage Roles" page).
+Either way, then set your profile role to **admin** (via Django admin at
+`/admin/` → User Profiles, or the in-app "Manage Roles" page).
 
 ---
 
