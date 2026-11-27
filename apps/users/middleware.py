@@ -4,6 +4,26 @@ from django.dispatch import receiver
 from .models import UserProfile
 
 
+class ForceSecureMiddleware:
+    """Treat every request as HTTPS.
+
+    For deployments where TLS is always terminated upstream and the app
+    is not directly reachable over plain HTTP (e.g. Synology's reverse
+    proxy, which doesn't send X-Forwarded-Proto). Enable with
+    ASSUME_HTTPS=1. Must run before SecurityMiddleware.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # WSGIRequest._get_scheme() reads wsgi.url_scheme from the environ
+        # (same dict as META) - setting it makes scheme/is_secure() return
+        # 'https'/'True' for every request.
+        request.META['wsgi.url_scheme'] = 'https'
+        return self.get_response(request)
+
+
 class EnsureUserProfileMiddleware:
     """Middleware to automatically create UserProfile for new users"""
     

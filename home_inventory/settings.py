@@ -189,6 +189,12 @@ if config('TRUST_PROXY', default=False, cast=bool):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     USE_X_FORWARDED_HOST = True
 
+# Some reverse proxies (e.g. Synology's) terminate TLS but don't send
+# X-Forwarded-Proto. When the app is ONLY reachable through an HTTPS
+# proxy, set ASSUME_HTTPS=1 so Django treats all requests as secure.
+if config('ASSUME_HTTPS', default=False, cast=bool):
+    MIDDLEWARE.insert(0, 'apps.users.middleware.ForceSecureMiddleware')
+
 # CSRF trusted origins: any extras from CSRF_TRUSTED_ORIGINS env var
 # (comma-separated), plus SITE_URL's origin (added below after SITE_URL is
 # defined) and dev localhost entries when DEBUG is on.
