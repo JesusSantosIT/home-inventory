@@ -205,14 +205,12 @@
     let photoCounter = 0;
     
     function openCamera() {
-        const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('cameraModal'));
         modal.show();
-        
-        // Start camera when modal is shown
-        document.getElementById('cameraModal').addEventListener('shown.bs.modal', startCamera, { once: true });
     }
     
     async function startCamera() {
+        if (cameraStream) return;  // already running - prevents flicker from duplicate calls
         try {
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: 'environment' },
@@ -296,7 +294,17 @@
         document.getElementById('savePhotoBtn').style.display = 'none';
         document.getElementById('retakeBtn').style.display = 'none';
         capturedBlob = null;
+        
+        // Detach stream from video element
+        const video = document.getElementById('cameraFeed');
+        if (video.srcObject) {
+            video.srcObject = null;
+        }
     }
+    
+    // Wire modal events once - camera stops on ANY close (X, backdrop, Cancel)
+    document.getElementById('cameraModal').addEventListener('shown.bs.modal', startCamera);
+    document.getElementById('cameraModal').addEventListener('hidden.bs.modal', stopCamera);
     
     // Handle file input changes for uploaded images
     document.getElementById('images').addEventListener('change', function(e) {
