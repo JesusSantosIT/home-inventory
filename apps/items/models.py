@@ -172,7 +172,7 @@ class Item(models.Model):
         """Absolute URL encoded in the QR code, based on SITE_URL setting."""
         from django.urls import reverse
         site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000').rstrip('/')
-        return f"{site_url}{reverse('item_detail', args=[self.pk])}"
+        return f"{site_url}{reverse('items:item_detail', args=[self.pk])}"
 
     def generate_barcode(self):
         """Generate a unique barcode (UUID-based, collision-free)"""
@@ -205,7 +205,7 @@ class Item(models.Model):
     
     def get_absolute_url(self):
         from django.urls import reverse
-        return reverse('item_detail', kwargs={'pk': self.pk})
+        return reverse('items:item_detail', kwargs={'pk': self.pk})
     
     def is_borrowed(self):
         """Check if item is currently borrowed (any quantity)"""

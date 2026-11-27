@@ -32,4 +32,4 @@ class Document(models.Model):
     
     def get_absolute_url(self):
         from django.urls import reverse
-        return reverse('document_detail', kwargs={'pk': self.pk})
+        return reverse('documents:document_detail', kwargs={'pk': self.pk})
