@@ -11,6 +11,7 @@ from .decorators import admin_required
 import hashlib
 import secrets
 from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 
 
@@ -32,7 +33,7 @@ class CustomLoginView(BaseLoginView):
     """Custom login view with account lockout and rate limiting"""
     template_name = 'registration/login.html'
     
-    @ratelimit(key='post:username', rate='5/m', method='POST', block=True)
+    @method_decorator(ratelimit(key='post:username', rate='5/m', method='POST', block=True))
     def post(self, request, *args, **kwargs):
         username = request.POST.get('username')
         
