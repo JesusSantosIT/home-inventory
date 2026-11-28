@@ -155,7 +155,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <video id="cameraFeed" autoplay playsinline style="width: 100%;"></video>
+                                        <video id="cameraFeed" autoplay playsinline muted style="width: 100%;"></video>
                                         <canvas id="cameraCanvas" style="display: none;"></canvas>
                                         <div id="capturedPreview" style="display: none; margin-top: 10px;">
                                             <img id="capturedImage" style="width: 100%; border-radius: 5px;">
@@ -218,7 +218,7 @@
             });
             const video = document.getElementById('cameraFeed');
             video.srcObject = cameraStream;
-            video.play();
+            video.play().catch(() => {});
         } catch (err) {
             console.error('Error accessing camera:', err);
             alert('Unable to access camera. Please ensure camera permissions are granted.');
@@ -251,17 +251,21 @@
     function savePhoto() {
         if (capturedBlob) {
             const file = new File([capturedBlob], `camera_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            const dataTransfer = new DataTransfer();
             const filesInput = document.getElementById('images');
-            
-            // Add existing files
-            for (let i = 0; i < filesInput.files.length; i++) {
-                dataTransfer.items.add(filesInput.files[i]);
+            try {
+                const dataTransfer = new DataTransfer();
+                // Add existing files
+                for (let i = 0; i < filesInput.files.length; i++) {
+                    dataTransfer.items.add(filesInput.files[i]);
+                }
+                // Add new photo
+                dataTransfer.items.add(file);
+                filesInput.files = dataTransfer.files;
+            } catch (err) {
+                console.error('Failed to attach photo to input:', err);
+                alert('Could not attach the photo. Please use the file picker instead.');
+                return;
             }
-            
-            // Add new photo
-            dataTransfer.items.add(file);
-            filesInput.files = dataTransfer.files;
             
             // Add to preview
             addImagePreview(file);

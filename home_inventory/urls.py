@@ -78,3 +78,12 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Serve user-uploaded media in production too - waitress does not serve
+# files on its own. Wrapped in login_required so uploaded photos are not
+# publicly accessible by URL.
+from django.views.static import serve as _media_serve
+urlpatterns += [
+    path('media/<path:path>', login_required(_media_serve),
+         {'document_root': settings.MEDIA_ROOT}),
+]
