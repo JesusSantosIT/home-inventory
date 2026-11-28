@@ -235,13 +235,14 @@
         };
         
         html5QrcodeScanner.start(
-            { facingMode: { ideal: "environment" } },
+            { facingMode: "environment" },
             config,
             onScanSuccess,
             onScanFailure
         ).catch(err => {
             console.error("Error starting scanner", err);
-            alert("Unable to access camera. Please ensure camera permissions are granted.");
+            const detail = err && (err.message || err.name) ? ` (${err.message || err.name})` : "";
+            alert("Unable to access camera." + detail);
             stopCameraScan();
         });
     }
