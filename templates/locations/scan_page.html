@@ -213,9 +213,14 @@
         
         const config = { 
             fps: 10, 
-            // Wider box - 1D barcodes need horizontal space to decode
-            qrbox: { width: 300, height: 200 },
-            aspectRatio: 1.0,
+            // Wide flat box + 16:9 - 1D barcodes need horizontal space
+            // and enough pixels to decode reliably
+            qrbox: { width: 320, height: 160 },
+            aspectRatio: 1.777,
+            videoConstraints: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
             formatsToSupport: [
                 Html5QrcodeSupportedFormats.QR_CODE,
                 Html5QrcodeSupportedFormats.DATA_MATRIX,
@@ -230,8 +235,7 @@
                 Html5QrcodeSupportedFormats.UPC_E,
                 Html5QrcodeSupportedFormats.ITF,
                 Html5QrcodeSupportedFormats.CODABAR,
-            ],
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+            ]
         };
         
         html5QrcodeScanner.start(
