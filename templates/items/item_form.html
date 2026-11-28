@@ -213,7 +213,7 @@
         if (cameraStream) return;  // already running - prevents flicker from duplicate calls
         try {
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' },
+                video: { facingMode: { ideal: 'environment' } },
                 audio: false 
             });
             const video = document.getElementById('cameraFeed');

@@ -254,4 +254,8 @@ class ItemImage(models.Model):
         if self.image and not self.thumbnail:
             from .utils import save_thumbnail
             save_thumbnail(self, 'image', 'thumbnail', size=(300, 300))
+            # objects.create() passes force_insert=True through kwargs;
+            # the second save must UPDATE the row just inserted, not
+            # re-INSERT with the same pk (duplicate key error).
+            kwargs.pop('force_insert', None)
             super().save(*args, **kwargs)
