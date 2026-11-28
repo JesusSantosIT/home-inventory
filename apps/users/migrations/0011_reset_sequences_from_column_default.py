@@ -47,7 +47,13 @@ def reset_sequences(apps, schema_editor):
 
         # 2) IDENTITY columns have no pg_attrdef default; find their
         #    sequences via pg_get_serial_sequence per model table.
+        #    Only models whose PK column is actually 'id' - the function
+        #    RAISES UndefinedColumn for missing columns (e.g. django_session
+        #    whose PK is session_key), which would abort the transaction.
         for model in apps.get_models():
+            pk = model._meta.pk
+            if pk is None or pk.column != 'id':
+                continue
             table = model._meta.db_table
             if (current_schema, table) in targets:
                 continue
