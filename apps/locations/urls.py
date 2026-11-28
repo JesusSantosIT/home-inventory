@@ -15,7 +15,7 @@ urlpatterns = [
     path('<int:pk>/qr-code/', views.generate_qr_code, name='generate_qr_code'),
     path('<int:pk>/children/', views.load_children, name='load_children'),
     path('scan/', views.scan_page, name='scan_page'),
-    path('lookup/<str:code>/', views.lookup_code, name='lookup_code'),
+    path('lookup/<path:code>/', views.lookup_code, name='lookup_code'),
     path('move/', views.move_location, name='move_location'),
     path('import/', views.import_locations, name='import_locations'),
 ]

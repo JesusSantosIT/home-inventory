@@ -176,10 +176,26 @@
         }
     });
     
+    // Route a scanned/typed code to the right place. Item QR codes encode
+    // the full detail URL - follow it directly (same-origin only). Anything
+    // else goes through the barcode/QR lookup endpoint.
+    function handleScannedCode(text) {
+        text = (text || '').trim();
+        if (!text) return;
+        try {
+            const url = new URL(text);
+            if (url.origin === window.location.origin) {
+                window.location.href = url.pathname + url.search;
+                return;
+            }
+        } catch (e) { /* not a URL - fall through to lookup */ }
+        window.location.href = '/lookup/' + encodeURIComponent(text) + '/';
+    }
+    
     function lookupCode() {
         const code = document.getElementById('barcode-input').value.trim();
         if (code) {
-            window.location.href = `/lookup/${code}/`;
+            handleScannedCode(code);
         } else {
             alert('Please enter a barcode or QR code');
         }
@@ -197,12 +213,29 @@
         
         const config = { 
             fps: 10, 
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
+            // Wider box - 1D barcodes need horizontal space to decode
+            qrbox: { width: 300, height: 200 },
+            aspectRatio: 1.0,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.DATA_MATRIX,
+                Html5QrcodeSupportedFormats.AZTEC,
+                Html5QrcodeSupportedFormats.PDF_417,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.CODABAR,
+            ],
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         };
         
         html5QrcodeScanner.start(
-            { facingMode: "environment" },
+            { facingMode: { ideal: "environment" } },
             config,
             onScanSuccess,
             onScanFailure
@@ -223,8 +256,8 @@
             });
         }
         
-        // Redirect to lookup page
-        window.location.href = `/lookup/${decodedText}/`;
+        // Route through handler - QR codes may contain a full URL
+        handleScannedCode(decodedText);
     }
     
     function onScanFailure(error) {
