@@ -201,16 +201,23 @@
 {% block extra_js %}
 <script>
     let cameraStream = null;
+    let cameraStarting = false;
     let capturedBlob = null;
+    let capturing = false;
     let photoCounter = 0;
     
     function openCamera() {
         const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('cameraModal'));
         modal.show();
+        // Start immediately inside the click handler - iOS Safari expires
+        // the user-gesture permission if getUserMedia runs after the modal
+        // transition (shown.bs.modal), causing silent failure.
+        startCamera();
     }
     
     async function startCamera() {
-        if (cameraStream) return;  // already running - prevents flicker from duplicate calls
+        if (cameraStream || cameraStarting) return;  // prevents duplicate streams -> flicker
+        cameraStarting = true;
         try {
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: { ideal: 'environment' } },
@@ -218,15 +225,19 @@
             });
             const video = document.getElementById('cameraFeed');
             video.srcObject = cameraStream;
-            video.play().catch(() => {});
+            await video.play().catch(() => {});
         } catch (err) {
             console.error('Error accessing camera:', err);
             alert('Unable to access camera. Please ensure camera permissions are granted.');
             bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
+        } finally {
+            cameraStarting = false;
         }
     }
     
     function capturePhoto() {
+        if (capturing || capturedBlob || !cameraStream) return;
+        capturing = true;
         const video = document.getElementById('cameraFeed');
         const canvas = document.getElementById('cameraCanvas');
         const ctx = canvas.getContext('2d');
@@ -236,6 +247,8 @@
         ctx.drawImage(video, 0, 0);
         
         canvas.toBlob((blob) => {
+            capturing = false;
+            if (!blob) return;
             capturedBlob = blob;
             const img = document.getElementById('capturedImage');
             img.src = URL.createObjectURL(blob);
@@ -298,6 +311,7 @@
         document.getElementById('savePhotoBtn').style.display = 'none';
         document.getElementById('retakeBtn').style.display = 'none';
         capturedBlob = null;
+        capturing = false;
         
         // Detach stream from video element
         const video = document.getElementById('cameraFeed');
@@ -306,8 +320,8 @@
         }
     }
     
-    // Wire modal events once - camera stops on ANY close (X, backdrop, Cancel)
-    document.getElementById('cameraModal').addEventListener('shown.bs.modal', startCamera);
+    // Camera starts in openCamera() (user-gesture context for iOS);
+    // stop on ANY close (X, backdrop, Cancel, save)
     document.getElementById('cameraModal').addEventListener('hidden.bs.modal', stopCamera);
     
     // Handle file input changes for uploaded images
